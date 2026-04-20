@@ -10,39 +10,20 @@ import PolicyEngineView from './components/dashboard/PolicyEngineView';
 import IntegrationsView from './components/dashboard/IntegrationsView';
 import PaymentModal from './components/modals/PaymentModal';
 export default function App() {
-  const [url, setUrl] = useState('');
+const [url, setUrl] = useState('');
   const [result, setResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
- const [activeView, setActiveView] = useState<'audit' | 'history' | 'policy' | 'integrations'>('audit');
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [activeView, setActiveView] = useState<'audit' | 'history' | 'policy' | 'integrations'>('audit');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isPaymentPending, setIsPaymentPending] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [userTier, setUserTier] = useState<'free' | 'pro'>(() => {
-    return (localStorage.getItem('user_tier') as 'free' | 'pro') || 'free';
+  const [userTier, setUserTier] = useState<'Free' | 'Pro'>(() => {
+    return (localStorage.getItem('user_tier') as 'Free' | 'Pro') || 'Free';
   });
-
-  // 1. Efecto para detectar el pago y desbloquear
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const status = params.get('status');
-    const plan = params.get('plan');
-    const hasAccess = localStorage.getItem('audit_premium') === 'true';
-
-    if (status === 'success' || hasAccess) {
-      setIsUnlocked(true);
-      localStorage.setItem('audit_premium', 'true');
-      
-      if (plan === 'pro') {
-        localStorage.setItem('user_tier', 'pro');
-        setUserTier('pro');
-      }
-
-      if (status === 'success') {
-        window.history.replaceState({}, document.title, "/");
-        alert("¡Acceso verificado! Informe desbloqueado.");
-      }
-    }
-  }, []);
-
-  // 2. Función para ejecutar la auditoría
 const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
     setResult(null);
