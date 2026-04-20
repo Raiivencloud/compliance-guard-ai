@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Search, Globe } from 'lucide-react';
+import { Shield, Search, Globe, History, Lock } from 'lucide-react';
 
 // IMPORTACIONES DE TUS COMPONENTES
 import Header from './components/common/Header';
@@ -12,15 +12,22 @@ import PaymentModal from './components/modals/PaymentModal';
 import { runAudit } from './services/geminiAudit';
 
 // ========================================================
-// 🔥 NEUTRALIZADOR DE I18NEXT (Evita el error de image_6722dd.png)
+// ⚡ SUPER-BYPASS DE IDIOMA (Solución para image_6726de.png)
 // ========================================================
-// @ts-ignore
-window.useTranslation = () => ({ t: (key: string) => key, i18n: { changeLanguage: () => {} } });
+// Inyectamos las funciones directamente en el window para que 
+// ningún componente hijo falle al intentar traducir.
+(window as any).t = (key: string) => key;
+(window as any).useTranslation = () => ({
+  t: (key: string) => key,
+  i18n: { changeLanguage: async () => {}, language: 'es' }
+});
 
-// Definimos el contexto local para que el Header y otros no chillen
+// Creamos un Provider local robusto
 export const LanguageContext = createContext({ t: (key: string) => key });
 const LanguageProvider = ({ children }: { children: React.ReactNode }) => (
-  <LanguageContext.Provider value={{ t: (key: string) => key }}>{children}</LanguageContext.Provider>
+  <LanguageContext.Provider value={{ t: (key: string) => key }}>
+    {children}
+  </LanguageContext.Provider>
 );
 
 function MainApp() {
@@ -58,14 +65,14 @@ function MainApp() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-blue-100">
       <Header 
         activeView={activeView} 
         onViewChange={setActiveView}
         isLoggedIn={isLoggedIn}
         userTier={userTier}
         onLogin={() => setIsLoggedIn(true)}
-        onLogout={() => setIsLoggedIn(false)}
+        onLogout={() => { setIsLoggedIn(false); setUserTier('Free'); }}
       />
 
       <main className="flex-1 grid grid-cols-12 gap-8 p-8 mt-16 max-w-[1600px] mx-auto w-full">
@@ -79,11 +86,12 @@ function MainApp() {
         <div className="col-span-12 xl:col-span-8">
           <AnimatePresence mode="wait">
             {activeView === 'audit' ? (
-              <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                 {isAuditing ? (
-                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center">
+                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center border border-slate-200 shadow-sm">
                     <Shield size={48} className="animate-pulse text-blue-600 mb-4" />
-                    <h2 className="text-2xl font-black text-slate-900">ComplianceGuard Analizando...</h2>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Peritaje en curso...</h2>
+                    <p className="text-slate-500 mt-2">Analizando términos y condiciones con IA.</p>
                   </div>
                 ) : result ? (
                   <ResultsOverview 
@@ -93,10 +101,10 @@ function MainApp() {
                     userTier={userTier}
                   />
                 ) : (
-                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center border-2 border-dashed border-slate-100">
+                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
                     <Search size={48} className="text-slate-200 mb-4" />
                     <p className="text-slate-400 font-medium italic text-center">
-                       Ingresá una URL de TikTok para comenzar el peritaje legal
+                       Ingresá una URL de TikTok para comenzar el análisis legal
                     </p>
                   </div>
                 )}
@@ -113,7 +121,6 @@ function MainApp() {
   );
 }
 
-// EXPORTACIÓN CON EL PROVIDER LOCAL
 export default function App() {
   return (
     <LanguageProvider>
