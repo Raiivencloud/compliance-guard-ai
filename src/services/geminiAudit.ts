@@ -25,7 +25,7 @@ Reglas críticas:
 3. Validación: Si el texto no es una política de privacidad, devuelve: {"error": "Documento no válido."}
 4. Criterio: Sé extremadamente pesimista; ante la duda, prioridad alta.`;
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
   const PRIMARY_MODEL = "gemini-3.1-pro-preview";
