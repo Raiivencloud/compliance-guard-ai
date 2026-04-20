@@ -1,6 +1,6 @@
 import { Shield, LayoutDashboard, History, Settings, Globe, LogOut, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslation } from '../../hooks/useTranslation';
+const useTranslation = () => ({ t: (key: string) => key });
 import { cn } from '../../lib/utils';
 
 type View = 'audit' | 'history' | 'policy' | 'integrations';
