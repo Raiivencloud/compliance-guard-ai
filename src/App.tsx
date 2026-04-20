@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Search, Globe, History, Lock } from 'lucide-react';
 
@@ -10,6 +10,21 @@ import ResultsOverview from './components/dashboard/ResultsOverview';
 import HistoryView from './components/dashboard/HistoryView';
 import PaymentModal from './components/modals/PaymentModal';
 import { runAudit } from './services/geminiAudit';
+
+// ==========================================
+// 🛡️ ESCUDO TOTAL CONTRA EL ERROR DE IDIOMA
+// ==========================================
+// Esto es lo que soluciona el error de tus capturas
+export const LanguageContext = createContext<any>({ t: (key: string) => key });
+
+const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+  const t = (key: string) => key; // Retorna el nombre de la clave como texto
+  return (
+    <LanguageContext.Provider value={{ t, language: 'es' }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
 
 function MainApp() {
   const [result, setResult] = useState<any>(null);
@@ -102,6 +117,11 @@ function MainApp() {
   );
 }
 
+// 🏁 LA CLAVE: Envolvemos MainApp con el Provider que creamos arriba
 export default function App() {
-  return <MainApp />;
+  return (
+    <LanguageProvider>
+      <MainApp />
+    </LanguageProvider>
+  );
 }
