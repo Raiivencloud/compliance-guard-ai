@@ -100,7 +100,7 @@ function MainApp() {
                   <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
                     <Search size={48} className="text-slate-200 mb-4" />
                     <p className="text-slate-400 font-medium italic text-center">
-                       Ingresá una URL de TikTok para comenzar el análisis legal
+                       Ingresá una URL de TikTok para comenzar el análisis legal.
                     </p>
                   </div>
                 )}
