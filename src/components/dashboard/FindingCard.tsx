@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, ShieldCheck, AlertCircle, Shield, Lock } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import type { AuditFinding, RiskLevel } from '../../types';
 
 interface FindingCardProps {
