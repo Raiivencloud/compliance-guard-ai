@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Upload, RefreshCw, Zap, Globe } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { useTranslation } from '../../hooks/useTranslation';
-
+const useTranslation = () => ({ t: (key: string) => key });
 interface AuditToolProps {
   onAudit: (source: string | File) => void;
   isAuditing: boolean;
