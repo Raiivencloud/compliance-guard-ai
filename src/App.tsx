@@ -1,8 +1,8 @@
-import { useState, useEffect, createContext } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Search } from 'lucide-react';
+import { Shield, Search, History, Lock } from 'lucide-react';
 
-// IMPORTACIONES DE TUS COMPONENTES
+// IMPORTACIONES DE COMPONENTES
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
 import AuditTool from './components/landing/AuditTool';
@@ -11,13 +11,27 @@ import HistoryView from './components/dashboard/HistoryView';
 import PaymentModal from './components/modals/PaymentModal';
 import { runAudit } from './services/geminiAudit';
 
-// 1. CREAMOS UN PROVIDER "FANTASMA" AQUÍ MISMO
-// Esto evita el error de "must be used within a LanguageProvider"
-const LanguageContext = createContext({ t: (key: string) => key });
+// 1. BYPASS DE TRADUCCIONES (Para evitar el error de image_66cc48.png)
+// @ts-ignore
+window.useTranslation = () => ({ t: (key: string) => key, i18n: { changeLanguage: () => {} } });
+
+export const LanguageContext = createContext({
+  t: (key: string) => key,
+  language: 'es',
+  setLanguage: (lang: string) => {}
+});
+
 const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
-  return <LanguageContext.Provider value={{ t: (key: string) => key }}>{children}</LanguageContext.Provider>;
+  const [language, setLanguage] = useState('es');
+  const t = (key: string) => key; // Retorna la llave (ej: "header.title") como texto
+  return (
+    <LanguageContext.Provider value={{ t, language, setLanguage }}>
+      {children}
+    </LanguageContext.Provider>
+  );
 };
 
+// 2. LÓGICA PRINCIPAL DE LA APP
 function MainApp() {
   const [result, setResult] = useState<any>(null);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -41,13 +55,12 @@ function MainApp() {
   const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
     setResult(null);
-    setActiveView('audit');
     try {
       const auditResult = await runAudit(source);
       setResult(auditResult);
       setHistory(prev => [auditResult, ...prev]);
     } catch (err) {
-      console.error(err);
+      console.error("Error en auditoría:", err);
     } finally {
       setIsAuditing(false);
     }
@@ -61,7 +74,7 @@ function MainApp() {
         isLoggedIn={isLoggedIn}
         userTier={userTier}
         onLogin={() => setIsLoggedIn(true)}
-        onLogout={() => setIsLoggedIn(false)}
+        onLogout={() => { setIsLoggedIn(false); setUserTier('Free'); }}
       />
 
       <main className="flex-1 grid grid-cols-12 gap-8 p-8 mt-16 max-w-[1600px] mx-auto w-full">
@@ -79,7 +92,7 @@ function MainApp() {
                 {isAuditing ? (
                   <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center">
                     <Shield size={48} className="animate-pulse text-blue-600 mb-4" />
-                    <h2 className="text-2xl font-black text-slate-900">Escaneando...</h2>
+                    <h2 className="text-2xl font-black">Analizando...</h2>
                   </div>
                 ) : result ? (
                   <ResultsOverview 
@@ -91,7 +104,7 @@ function MainApp() {
                 ) : (
                   <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
                     <Search size={48} className="text-slate-300 mb-4" />
-                    <p className="text-slate-400 font-medium">Listo para auditar</p>
+                    <p className="text-slate-400 font-medium">ComplianceGuard AI - Mendoza</p>
                   </div>
                 )}
               </motion.div>
@@ -106,7 +119,7 @@ function MainApp() {
   );
 }
 
-// 2. EXPORTAMOS ENVOLVIENDO CON EL PROVIDER QUE CREAMOS ARRIBA
+// EXPORTACIÓN FINAL
 export default function App() {
   return (
     <LanguageProvider>
@@ -114,4 +127,4 @@ export default function App() {
     </LanguageProvider>
   );
 }
-// Forzando nuevo build sin secretos...
+// Último build forzado para limpiar el caché de Netlify.
