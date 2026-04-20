@@ -1,8 +1,8 @@
-import { useState, useEffect, createContext } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Search, Globe, History, Lock } from 'lucide-react';
 
-// IMPORTACIONES DE TUS COMPONENTES
+// IMPORTACIONES DE COMPONENTES
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
 import AuditTool from './components/landing/AuditTool';
@@ -11,24 +11,27 @@ import HistoryView from './components/dashboard/HistoryView';
 import PaymentModal from './components/modals/PaymentModal';
 import { runAudit } from './services/geminiAudit';
 
-// ========================================================
-// ⚡ SUPER-BYPASS DE IDIOMA (Solución para image_6726de.png)
-// ========================================================
-// Inyectamos las funciones directamente en el window para que 
-// ningún componente hijo falle al intentar traducir.
-(window as any).t = (key: string) => key;
-(window as any).useTranslation = () => ({
-  t: (key: string) => key,
-  i18n: { changeLanguage: async () => {}, language: 'es' }
-});
+// ==========================================
+// 🛡️ BYPASS TOTAL DE IDIOMA (Para image_6739dc.png)
+// ==========================================
+// Creamos el contexto aquí mismo para que no dependa de archivos externos
+export const LanguageContext = createContext<any>({ t: (key: string) => key });
 
-// Creamos un Provider local robusto
-export const LanguageContext = createContext({ t: (key: string) => key });
-const LanguageProvider = ({ children }: { children: React.ReactNode }) => (
-  <LanguageContext.Provider value={{ t: (key: string) => key }}>
-    {children}
-  </LanguageContext.Provider>
-);
+export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+  const t = (key: string) => {
+    const translations: any = {
+      'header.login': 'Entrar',
+      'hero.title': 'ComplianceGuard AI',
+      'audit.button': 'Analizar ahora'
+    };
+    return translations[key] || key;
+  };
+  return (
+    <LanguageContext.Provider value={{ t, language: 'es' }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
 
 function MainApp() {
   const [result, setResult] = useState<any>(null);
@@ -88,24 +91,16 @@ function MainApp() {
             {activeView === 'audit' ? (
               <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                 {isAuditing ? (
-                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center border border-slate-200 shadow-sm">
+                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center">
                     <Shield size={48} className="animate-pulse text-blue-600 mb-4" />
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Peritaje en curso...</h2>
-                    <p className="text-slate-500 mt-2">Analizando términos y condiciones con IA.</p>
+                    <h2 className="text-2xl font-black">Analizando términos...</h2>
                   </div>
                 ) : result ? (
-                  <ResultsOverview 
-                    result={result} 
-                    isUnlocked={isUnlocked} 
-                    onExport={() => setIsPaymentOpen(true)}
-                    userTier={userTier}
-                  />
+                  <ResultsOverview result={result} isUnlocked={isUnlocked} onExport={() => setIsPaymentOpen(true)} userTier={userTier} />
                 ) : (
                   <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
                     <Search size={48} className="text-slate-200 mb-4" />
-                    <p className="text-slate-400 font-medium italic text-center">
-                       Ingresá una URL de TikTok para comenzar el análisis legal
-                    </p>
+                    <p className="text-slate-400 font-medium italic">ComplianceGuard AI - Mendoza</p>
                   </div>
                 )}
               </motion.div>
@@ -115,12 +110,12 @@ function MainApp() {
           </AnimatePresence>
         </div>
       </main>
-
       <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} />
     </div>
   );
 }
 
+// EXPORTACIÓN CON EL PROVIDER LOCAL DEFINIDO ARRIBA
 export default function App() {
   return (
     <LanguageProvider>
