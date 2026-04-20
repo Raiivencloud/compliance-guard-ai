@@ -1,8 +1,7 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AuditResult, AuditFinding, RiskLevel } from "../types";
-
+// ... resto del código ...
 const SYSTEM_INSTRUCTION = `Eres 'ComplianceGuard Engine', una IA especializada en derecho digital y seguridad de la información. Tu tarea es analizar Términos y Condiciones y Políticas de Privacidad de servicios de IA.
-
 Tu salida debe ser exclusivamente un objeto JSON con la siguiente estructura:
 {
 "score": (número del 1 al 100, donde 100 es seguro),
@@ -30,9 +29,6 @@ const ai = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
 export async function runAudit(source: string | File): Promise<AuditResult> {
   const PRIMARY_MODEL = "gemini-3.1-pro-preview";
   const FALLBACK_MODEL = "gemini-3-flash-preview";
-  
-  let content: any = null;
-
   if (typeof source === 'string') {
     content = { text: `Analiza las secciones de Privacidad y Uso de Datos de este servicio: ${source}. Prioriza la detección de uso de datos para entrenamiento de IA.` };
   } else {
