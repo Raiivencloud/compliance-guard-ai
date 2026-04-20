@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield } from 'lucide-react';
+import { Shield, Lock, History, Search } from 'lucide-react';
 
 // IMPORTACIONES DE TUS COMPONENTES
 import Header from './components/common/Header';
@@ -10,11 +10,10 @@ import ResultsOverview from './components/dashboard/ResultsOverview';
 import HistoryView from './components/dashboard/HistoryView';
 import PaymentModal from './components/modals/PaymentModal';
 
-// PROBAMOS CON LA RUTA MÁS COMÚN (Si falla, revisá tu carpeta 'contexts')
+// ⚠️ ATENCIÓN: Si este import falla, revisá que el archivo exista en esa carpeta exacta
 import { LanguageProvider } from './contexts/LanguageContext'; 
 
 function MainApp() {
-  const [url, setUrl] = useState('');
   const [result, setResult] = useState<any>(null);
   const [isAuditing, setIsAuditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,10 +28,15 @@ function MainApp() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('status') === 'success' || localStorage.getItem('audit_premium') === 'true') {
+    const status = params.get('status');
+    const hasAccess = localStorage.getItem('audit_premium') === 'true';
+
+    if (status === 'success' || hasAccess) {
       setIsUnlocked(true);
       localStorage.setItem('audit_premium', 'true');
-      if (params.get('status') === 'success') window.history.replaceState({}, document.title, "/");
+      if (status === 'success') {
+        window.history.replaceState({}, document.title, "/");
+      }
     }
   }, []);
 
@@ -42,25 +46,25 @@ function MainApp() {
     setError(null);
     setActiveView('audit');
     try {
-      // Simulamos la llamada a Gemini para evitar errores si runAudit no está global
-      console.log("Analizando:", source);
-      // Aquí deberías tener tu lógica de runAudit(source)
+      // Aquí el código esperará la respuesta de tu lógica de auditoría
+      // const res = await runAudit(source); 
+      // setResult(res);
     } catch (err) {
-      setError("Error en la conexión con el motor de IA.");
+      setError("Error de conexión con el motor de IA.");
     } finally {
       setIsAuditing(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-blue-100">
       <Header 
         activeView={activeView} 
         onViewChange={setActiveView}
         isLoggedIn={isLoggedIn}
         userTier={userTier}
         onLogin={() => setIsLoggedIn(true)}
-        onLogout={() => setIsLoggedIn(false)}
+        onLogout={() => { setIsLoggedIn(false); setUserTier('Free'); }}
       />
 
       <main className="flex-1 grid grid-cols-12 gap-8 p-8 mt-16 max-w-[1600px] mx-auto w-full">
@@ -74,17 +78,23 @@ function MainApp() {
         <div className="col-span-12 xl:col-span-8">
           <AnimatePresence mode="wait">
             {activeView === 'audit' ? (
-              <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                 {isAuditing ? (
-                  <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center">
-                    <Shield size={40} className="animate-pulse text-blue-600" />
-                    <h2 className="text-2xl font-black mt-4">Escaneando...</h2>
+                  <div className="bg-white rounded-3xl h-[400px] flex flex-col items-center justify-center p-12 text-center">
+                    <Shield size={48} className="animate-pulse text-blue-600 mb-4" />
+                    <h2 className="text-2xl font-black">Analizando Protocolos...</h2>
                   </div>
                 ) : result ? (
-                  <ResultsOverview result={result} isUnlocked={isUnlocked} onExport={() => setIsPaymentOpen(true)} />
+                  <ResultsOverview 
+                    result={result} 
+                    isUnlocked={isUnlocked} 
+                    onExport={() => setIsPaymentOpen(true)}
+                    userTier={userTier}
+                  />
                 ) : (
-                  <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-100">
-                    <h3 className="text-xl font-black text-slate-400">Listo para empezar</h3>
+                  <div className="bg-white rounded-3xl h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
+                    <Search size={48} className="text-slate-300 mb-4" />
+                    <p className="text-slate-400 font-medium">Ingresá una URL para comenzar la auditoría</p>
                   </div>
                 )}
               </motion.div>
