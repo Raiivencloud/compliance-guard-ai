@@ -9,47 +9,60 @@ import HistoryView from './components/dashboard/HistoryView';
 import PolicyEngineView from './components/dashboard/PolicyEngineView';
 import IntegrationsView from './components/dashboard/IntegrationsView';
 import PaymentModal from './components/modals/PaymentModal';
-import { runAudit } from './services/geminiAudit';
-import { LanguageProvider, useTranslation } from './hooks/useTranslation';
-import type { AuditResult } from './types';
-
-type View = 'audit' | 'history' | 'policy' | 'integrations';
-
-function MainApp() {
-  const [result, setResult] = useState<AuditResult | null>(null);
-  const [isAuditing, setIsAuditing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<View>('audit');
-  const [history, setHistory] = useState<AuditResult[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userTier, setUserTier] = useState<'Free' | 'Pro'>('Free');
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [isPaymentPending, setIsPaymentPending] = useState(false);
+export default function App() {
+  const [url, setUrl] = useState('');
+  const [result, setResult] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'policies' | 'remediation'>('overview');
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const { t } = useTranslation();
+  const [userTier, setUserTier] = useState<'free' | 'pro'>(() => {
+    return (localStorage.getItem('user_tier') as 'free' | 'pro') || 'free';
+  });
 
-  const handleAudit = async (source: string | File) => {
-    setIsAuditing(true);
-    setResult(null);
-    setError(null);
-    // ... (líneas 1 a 33)
-34:   }, [activeTab, results]); 
-35:
-36:   // --- PEGALO ACÁ (Línea 36 en adelante) ---
-37:   useEffect(() => {
-38:     const params = new URLSearchParams(window.location.search);
-39:     if (params.get('status') === 'success' || localStorage.getItem('audit_premium') === 'true') {
-40:       setIsUnlocked(true);
-41:       localStorage.setItem('audit_premium', 'true');
-42:       if (params.get('plan') === 'pro') localStorage.setItem('user_tier', 'pro_monthly');
-43:       if (params.get('status') === 'success') window.history.replaceState({}, document.title, "/");
-44:     }
-45:   }, []);
-46:   // --- AQUÍ TERMINA EL PEGADO ---
-47:
-48:   return (
-49:     <div className="min-h-screen bg-slate-50 flex flex-col">
-// ... sigue el código
+  // 1. Efecto para detectar el pago y desbloquear
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const plan = params.get('plan');
+    const hasAccess = localStorage.getItem('audit_premium') === 'true';
+
+    if (status === 'success' || hasAccess) {
+      setIsUnlocked(true);
+      localStorage.setItem('audit_premium', 'true');
+      
+      if (plan === 'pro') {
+        localStorage.setItem('user_tier', 'pro');
+        setUserTier('pro');
+      }
+
+      if (status === 'success') {
+        window.history.replaceState({}, document.title, "/");
+        alert("¡Acceso verificado! Informe desbloqueado.");
+      }
+    }
+  }, []);
+
+  // 2. Función para ejecutar la auditoría
+  const handleAudit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!url) return;
+    setIsLoading(true);
+    try {
+      // Aquí llama a tu función de Gemini (analyzeCompliance o similar)
+      const response = await analyzeCompliance(url); 
+      setResult(response);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al analizar la URL. Intentá de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col">
     setActiveView('audit');
     
     try {
