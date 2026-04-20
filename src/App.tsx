@@ -13,7 +13,7 @@ export default function App() {
   const [url, setUrl] = useState('');
   const [result, setResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'policies' | 'remediation'>('overview');
+ const [activeView, setActiveView] = useState<'audit' | 'history' | 'policy' | 'integrations'>('audit');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [userTier, setUserTier] = useState<'free' | 'pro'>(() => {
     return (localStorage.getItem('user_tier') as 'free' | 'pro') || 'free';
