@@ -25,13 +25,31 @@ function MainApp() {
   const [userTier, setUserTier] = useState<'Free' | 'Pro'>('Free');
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isPaymentPending, setIsPaymentPending] = useState(false);
-  
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const { t } = useTranslation();
 
   const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
     setResult(null);
     setError(null);
+    // ... (líneas 1 a 33)
+34:   }, [activeTab, results]); 
+35:
+36:   // --- PEGALO ACÁ (Línea 36 en adelante) ---
+37:   useEffect(() => {
+38:     const params = new URLSearchParams(window.location.search);
+39:     if (params.get('status') === 'success' || localStorage.getItem('audit_premium') === 'true') {
+40:       setIsUnlocked(true);
+41:       localStorage.setItem('audit_premium', 'true');
+42:       if (params.get('plan') === 'pro') localStorage.setItem('user_tier', 'pro_monthly');
+43:       if (params.get('status') === 'success') window.history.replaceState({}, document.title, "/");
+44:     }
+45:   }, []);
+46:   // --- AQUÍ TERMINA EL PEGADO ---
+47:
+48:   return (
+49:     <div className="min-h-screen bg-slate-50 flex flex-col">
+// ... sigue el código
     setActiveView('audit');
     
     try {
@@ -148,7 +166,8 @@ function MainApp() {
                   </div>
                 ) : result ? (
                   <ResultsOverview 
-                    result={result} 
+                    result={result}
+                    isUnlocked={isUnlocked} //
                     onReset={() => setResult(null)} 
                     onExport={() => setIsPaymentOpen(true)}
                     userTier={userTier}
