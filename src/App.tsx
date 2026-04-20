@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Search, Globe, History, Lock } from 'lucide-react';
 
@@ -10,28 +10,6 @@ import ResultsOverview from './components/dashboard/ResultsOverview';
 import HistoryView from './components/dashboard/HistoryView';
 import PaymentModal from './components/modals/PaymentModal';
 import { runAudit } from './services/geminiAudit';
-
-// ==========================================
-// 🛡️ BYPASS TOTAL DE IDIOMA (Para image_6739dc.png)
-// ==========================================
-// Creamos el contexto aquí mismo para que no dependa de archivos externos
-export const LanguageContext = createContext<any>({ t: (key: string) => key });
-
-export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
-  const t = (key: string) => {
-    const translations: any = {
-      'header.login': 'Entrar',
-      'hero.title': 'ComplianceGuard AI',
-      'audit.button': 'Analizar ahora'
-    };
-    return translations[key] || key;
-  };
-  return (
-    <LanguageContext.Provider value={{ t, language: 'es' }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-};
 
 function MainApp() {
   const [result, setResult] = useState<any>(null);
@@ -91,16 +69,24 @@ function MainApp() {
             {activeView === 'audit' ? (
               <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                 {isAuditing ? (
-                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center">
+                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center border border-slate-200 shadow-sm">
                     <Shield size={48} className="animate-pulse text-blue-600 mb-4" />
-                    <h2 className="text-2xl font-black">Analizando términos...</h2>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Peritaje en curso...</h2>
+                    <p className="text-slate-500 mt-2">Analizando términos y condiciones con IA.</p>
                   </div>
                 ) : result ? (
-                  <ResultsOverview result={result} isUnlocked={isUnlocked} onExport={() => setIsPaymentOpen(true)} userTier={userTier} />
+                  <ResultsOverview 
+                    result={result} 
+                    isUnlocked={isUnlocked} 
+                    onExport={() => setIsPaymentOpen(true)}
+                    userTier={userTier}
+                  />
                 ) : (
                   <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
                     <Search size={48} className="text-slate-200 mb-4" />
-                    <p className="text-slate-400 font-medium italic">ComplianceGuard AI - Mendoza</p>
+                    <p className="text-slate-400 font-medium italic text-center">
+                       Ingresá una URL de TikTok para comenzar el análisis legal
+                    </p>
                   </div>
                 )}
               </motion.div>
@@ -110,16 +96,12 @@ function MainApp() {
           </AnimatePresence>
         </div>
       </main>
+
       <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} />
     </div>
   );
 }
 
-// EXPORTACIÓN CON EL PROVIDER LOCAL DEFINIDO ARRIBA
 export default function App() {
-  return (
-    <LanguageProvider>
-      <MainApp />
-    </LanguageProvider>
-  );
+  return <MainApp />;
 }
