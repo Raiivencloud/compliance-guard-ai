@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Lock, History, Search } from 'lucide-react';
 
-// IMPORTACIONES DE TUS COMPONENTES
+// IMPORTACIONES SEGÚN TU ESTRUCTURA REAL (image_664d26.png)
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
 import AuditTool from './components/landing/AuditTool';
@@ -10,8 +10,8 @@ import ResultsOverview from './components/dashboard/ResultsOverview';
 import HistoryView from './components/dashboard/HistoryView';
 import PaymentModal from './components/modals/PaymentModal';
 
-// ⚠️ ATENCIÓN: Si este import falla, revisá que el archivo exista en esa carpeta exacta
-import { LanguageProvider } from './contexts/LanguageContext'; 
+// Importamos tu servicio de IA
+import { runAudit } from './services/geminiAudit';
 
 function MainApp() {
   const [result, setResult] = useState<any>(null);
@@ -26,6 +26,7 @@ function MainApp() {
     return (localStorage.getItem('user_tier') as 'Free' | 'Pro') || 'Free';
   });
 
+  // Lógica para detectar el pago de Mercado Pago / PayPal
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
@@ -46,11 +47,12 @@ function MainApp() {
     setError(null);
     setActiveView('audit');
     try {
-      // Aquí el código esperará la respuesta de tu lógica de auditoría
-      // const res = await runAudit(source); 
-      // setResult(res);
-    } catch (err) {
-      setError("Error de conexión con el motor de IA.");
+      const auditResult = await runAudit(source);
+      setResult(auditResult);
+      setHistory(prev => [auditResult, ...prev]);
+    } catch (err: any) {
+      console.error(err);
+      setError("Error de conexión con el motor de IA. Reintentá en unos segundos.");
     } finally {
       setIsAuditing(false);
     }
@@ -70,7 +72,7 @@ function MainApp() {
       <main className="flex-1 grid grid-cols-12 gap-8 p-8 mt-16 max-w-[1600px] mx-auto w-full">
         <div className="col-span-12 xl:col-span-4 space-y-8">
           <Hero />
-          <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm relative overflow-hidden">
             <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
           </div>
         </div>
@@ -80,9 +82,10 @@ function MainApp() {
             {activeView === 'audit' ? (
               <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                 {isAuditing ? (
-                  <div className="bg-white rounded-3xl h-[400px] flex flex-col items-center justify-center p-12 text-center">
+                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center">
                     <Shield size={48} className="animate-pulse text-blue-600 mb-4" />
-                    <h2 className="text-2xl font-black">Analizando Protocolos...</h2>
+                    <h2 className="text-2xl font-black">Escaneando Protocolos...</h2>
+                    <p className="text-slate-500 mt-2">La IA de ComplianceGuard está analizando la cuenta.</p>
                   </div>
                 ) : result ? (
                   <ResultsOverview 
@@ -92,9 +95,9 @@ function MainApp() {
                     userTier={userTier}
                   />
                 ) : (
-                  <div className="bg-white rounded-3xl h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
+                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
                     <Search size={48} className="text-slate-300 mb-4" />
-                    <p className="text-slate-400 font-medium">Ingresá una URL para comenzar la auditoría</p>
+                    <p className="text-slate-400 font-medium">Ingresá una URL de TikTok para comenzar</p>
                   </div>
                 )}
               </motion.div>
@@ -110,10 +113,7 @@ function MainApp() {
   );
 }
 
+// EXPORTACIÓN SIMPLE PARA EVITAR ERRORES DE CONTEXTO
 export default function App() {
-  return (
-    <LanguageProvider>
-      <MainApp />
-    </LanguageProvider>
-  );
+  return <MainApp />;
 }
