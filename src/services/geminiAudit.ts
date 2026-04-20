@@ -30,12 +30,11 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
-  const PRIMARY_MODEL = "gemini-1.5-pro"; 
-  const FALLBACK_MODEL = "gemini-1.5-flash";
+  // ACTUALIZADO: Usando Gemini 3 Flash Preview
+  const MODEL_NAME = "gemini-3-flash-preview"; 
   
   let content: any;
 
-  // Preparamos el contenido según sea texto o archivo
   if (typeof source === 'string') {
     content = { text: `Analiza este servicio: ${source}. Busca cláusulas abusivas y uso de datos para IA.` };
   } else {
@@ -48,9 +47,9 @@ export async function runAudit(source: string | File): Promise<AuditResult> {
     };
   }
 
-  const performAudit = async (modelName: string) => {
+  const performAudit = async () => {
     const model = ai.getGenerativeModel({ 
-      model: modelName,
+      model: MODEL_NAME,
       systemInstruction: SYSTEM_INSTRUCTION 
     });
 
@@ -64,14 +63,7 @@ export async function runAudit(source: string | File): Promise<AuditResult> {
   };
 
   try {
-    let response;
-    try {
-      response = await performAudit(PRIMARY_MODEL);
-    } catch (error) {
-      console.warn("Modelo primario falló o no disponible, usando fallback...");
-      response = await performAudit(FALLBACK_MODEL);
-    }
-
+    const response = await performAudit();
     const rawJson = JSON.parse(response.text());
     
     return {
