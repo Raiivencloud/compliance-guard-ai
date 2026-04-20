@@ -24,6 +24,33 @@ const [url, setUrl] = useState('');
   const [userTier, setUserTier] = useState<'Free' | 'Pro'>(() => {
     return (localStorage.getItem('user_tier') as 'Free' | 'Pro') || 'Free';
   });
+  // 1. Efecto para detectar el pago y desbloquear (Mercado Pago / PayPal)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const plan = params.get('plan');
+    const hasAccess = localStorage.getItem('audit_premium') === 'true';
+
+    if (status === 'success' || hasAccess) {
+      setIsUnlocked(true);
+      localStorage.setItem('audit_premium', 'true');
+      
+      if (plan === 'pro' || plan === 'pro_monthly') {
+        localStorage.setItem('user_tier', 'Pro');
+        setUserTier('Pro');
+      }
+
+      if (status === 'success') {
+        window.history.replaceState({}, document.title, "/");
+      }
+    }
+  }, []);
+
+  // 2. Función de Login que el Header está pidiendo
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    setUserTier('Pro'); // O 'Free' según prefieras por defecto
+  };
 const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
     setResult(null);
