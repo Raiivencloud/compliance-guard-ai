@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Search, History, Lock } from 'lucide-react';
+import { Shield, Search, History, Lock, Globe } from 'lucide-react';
 
 // IMPORTACIONES DE COMPONENTES
 import Header from './components/common/Header';
@@ -11,27 +11,27 @@ import HistoryView from './components/dashboard/HistoryView';
 import PaymentModal from './components/modals/PaymentModal';
 import { runAudit } from './services/geminiAudit';
 
-// 1. BYPASS DE TRADUCCIONES (Para evitar el error de image_66cc48.png)
+// ==========================================
+// 🛡️ ESCUDO TOTAL CONTRA EL ERROR DE IDIOMA
+// ==========================================
+// Esto anula cualquier intento de los componentes de buscar react-i18next
 // @ts-ignore
-window.useTranslation = () => ({ t: (key: string) => key, i18n: { changeLanguage: () => {} } });
-
-export const LanguageContext = createContext({
+window.useTranslation = () => ({
   t: (key: string) => key,
-  language: 'es',
-  setLanguage: (lang: string) => {}
+  i18n: { changeLanguage: async () => {} }
 });
 
-const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
-  const [language, setLanguage] = useState('es');
-  const t = (key: string) => key; // Retorna la llave (ej: "header.title") como texto
-  return (
-    <LanguageContext.Provider value={{ t, language, setLanguage }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-};
+// Definimos nuestro propio Provider para que App no rompa
+export const LanguageContext = createContext({ t: (key: string) => key });
+const LanguageProvider = ({ children }: { children: React.ReactNode }) => (
+  <LanguageContext.Provider value={{ t: (key: string) => key }}>
+    {children}
+  </LanguageContext.Provider>
+);
 
-// 2. LÓGICA PRINCIPAL DE LA APP
+// ==========================================
+// 🚀 LÓGICA DE LA APLICACIÓN
+// ==========================================
 function MainApp() {
   const [result, setResult] = useState<any>(null);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -46,9 +46,11 @@ function MainApp() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('status') === 'success' || localStorage.getItem('audit_premium') === 'true') {
+    const status = params.get('status');
+    if (status === 'success' || localStorage.getItem('audit_premium') === 'true') {
       setIsUnlocked(true);
       localStorage.setItem('audit_premium', 'true');
+      if (status === 'success') window.history.replaceState({}, document.title, "/");
     }
   }, []);
 
@@ -60,14 +62,14 @@ function MainApp() {
       setResult(auditResult);
       setHistory(prev => [auditResult, ...prev]);
     } catch (err) {
-      console.error("Error en auditoría:", err);
+      console.error("Audit error:", err);
     } finally {
       setIsAuditing(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-blue-100">
       <Header 
         activeView={activeView} 
         onViewChange={setActiveView}
@@ -80,7 +82,7 @@ function MainApp() {
       <main className="flex-1 grid grid-cols-12 gap-8 p-8 mt-16 max-w-[1600px] mx-auto w-full">
         <div className="col-span-12 xl:col-span-4 space-y-8">
           <Hero />
-          <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm shadow-blue-900/5">
             <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
           </div>
         </div>
@@ -90,9 +92,10 @@ function MainApp() {
             {activeView === 'audit' ? (
               <motion.div key="audit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                 {isAuditing ? (
-                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center">
+                  <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center p-12 text-center border border-slate-200">
                     <Shield size={48} className="animate-pulse text-blue-600 mb-4" />
-                    <h2 className="text-2xl font-black">Analizando...</h2>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Escaneando Protocolos...</h2>
+                    <p className="text-slate-500 mt-2">La IA de ComplianceGuard está analizando la cuenta.</p>
                   </div>
                 ) : result ? (
                   <ResultsOverview 
@@ -103,8 +106,9 @@ function MainApp() {
                   />
                 ) : (
                   <div className="bg-white rounded-3xl h-[450px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200">
-                    <Search size={48} className="text-slate-300 mb-4" />
+                    <Search size={48} className="text-slate-200 mb-4" />
                     <p className="text-slate-400 font-medium">ComplianceGuard AI - Mendoza</p>
+                    <p className="text-slate-300 text-sm mt-1">Listo para auditar tu primera URL</p>
                   </div>
                 )}
               </motion.div>
@@ -114,12 +118,13 @@ function MainApp() {
           </AnimatePresence>
         </div>
       </main>
+
       <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} />
     </div>
   );
 }
 
-// EXPORTACIÓN FINAL
+// EXPORTACIÓN CON WRAPPER
 export default function App() {
   return (
     <LanguageProvider>
@@ -127,4 +132,5 @@ export default function App() {
     </LanguageProvider>
   );
 }
-// Último build forzado para limpiar el caché de Netlify.
+
+// BUILD FINAL - ComplianceGuard Mendoza
