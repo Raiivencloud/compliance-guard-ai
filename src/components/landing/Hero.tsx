@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { useTranslation } from '../../hooks/useTranslation';
-
+const useTranslation = () => ({ t: (key: string) => key });
 export default function Hero() {
   const { t } = useTranslation();
   
