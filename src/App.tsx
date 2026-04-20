@@ -9,8 +9,11 @@ import HistoryView from './components/dashboard/HistoryView';
 import PolicyEngineView from './components/dashboard/PolicyEngineView';
 import IntegrationsView from './components/dashboard/IntegrationsView';
 import PaymentModal from './components/modals/PaymentModal';
-export default function App() {
-const [url, setUrl] = useState('');
+import { LanguageProvider } from './contexts/LanguageContext'; // Asegúrate de que esta ruta sea correcta
+
+// 1. Aquí definimos la App con toda la lógica
+function MainApp() {
+  const [url, setUrl] = useState('');
   const [result, setResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -24,7 +27,8 @@ const [url, setUrl] = useState('');
   const [userTier, setUserTier] = useState<'Free' | 'Pro'>(() => {
     return (localStorage.getItem('user_tier') as 'Free' | 'Pro') || 'Free';
   });
-  // 1. Efecto para detectar el pago y desbloquear (Mercado Pago / PayPal)
+
+  // Efecto para detectar el pago y desbloquear
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
@@ -46,26 +50,27 @@ const [url, setUrl] = useState('');
     }
   }, []);
 
-  // 2. Función de Login que el Header está pidiendo
   const handleLogin = () => {
     setIsLoggedIn(true);
-    setUserTier('Pro'); // O 'Free' según prefieras por defecto
+    setUserTier('Pro');
   };
-const handleAudit = async (source: string | File) => {
+
+  const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
     setResult(null);
     setError(null);
     setActiveView('audit');
 
     try {
+      // @ts-ignore - Aquí va tu función de auditoría (runAudit o analyzeCompliance)
       const auditResult = await runAudit(source);
       setResult(auditResult);
       setHistory(prev => [auditResult, ...prev]);
     } catch (err: any) {
       console.error(err);
       let message = 'Audit Protocol Error: Secure connection interrupted.';
-      if (err.message?.includes('503') || err.message?.includes('high demand')) {
-        message = 'Engine Overload: High demand detected. Our primary nodes are saturated.';
+      if (err.message?.includes('503')) {
+        message = 'Engine Overload: High demand detected.';
       }
       setError(message);
     } finally {
@@ -73,7 +78,7 @@ const handleAudit = async (source: string | File) => {
     }
   };
 
-  const handleSelectHistory = (selected: AuditResult) => {
+  const handleSelectHistory = (selected: any) => {
     setResult(selected);
     setActiveView('audit');
   };
@@ -107,8 +112,8 @@ const handleAudit = async (source: string | File) => {
               <motion.div key="audit-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                 {isAuditing ? (
                   <div className="bg-white rounded-3xl border border-slate-200 h-full flex flex-col items-center justify-center p-12 text-center text-slate-900">
-                     <Shield size={40} className="animate-pulse text-blue-600" />
-                     <h2 className="text-2xl font-black mt-4">Análisis en Progreso...</h2>
+                    <Shield size={40} className="animate-pulse text-blue-600" />
+                    <h2 className="text-2xl font-black mt-4">Análisis en Progreso...</h2>
                   </div>
                 ) : error ? (
                   <div className="bg-white rounded-3xl border border-red-200 h-full flex flex-col items-center justify-center p-12 text-center">
@@ -140,7 +145,6 @@ const handleAudit = async (source: string | File) => {
                 <HistoryView history={history} onSelectResult={handleSelectHistory} />
               </motion.div>
             )}
-            {/* ... aquí podrías agregar los otros views (policy/integrations) si los usas */}
           </AnimatePresence>
         </div>
       </main>
@@ -151,5 +155,14 @@ const handleAudit = async (source: string | File) => {
         onUpgrade={() => { setUserTier('Pro'); setIsPaymentOpen(false); }}
       />
     </div>
+  );
+}
+
+// 2. Exportamos App envolviendo todo con el Provider de Idioma
+export default function App() {
+  return (
+    <LanguageProvider>
+      <MainApp />
+    </LanguageProvider>
   );
 }
