@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, googleProvider } from './lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { onAuthStateChanged, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
@@ -16,20 +16,31 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
+  // Inyección manual de PayPal (para que aparezca sí o sí)
   useEffect(() => {
-    // 1. ESTO ES LO QUE ARREGLA LA PANTALLA COMPLETA
-    // Al recargar la página tras el login, esto captura al usuario.
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          console.log("Login exitoso tras pantalla completa");
+    if (isPaymentOpen && !document.getElementById('paypal-sdk')) {
+      const script = document.createElement('script');
+      script.id = 'paypal-sdk';
+      script.src = "https://www.paypal.com/sdk/js?client-id=test&currency=USD"; 
+      script.onload = () => {
+        if ((window as any).paypal) {
+          (window as any).paypal.Buttons({
+            style: { layout: 'horizontal', shape: 'pill', height: 40 },
+            onApprove: async () => {
+              if (user) {
+                await updateDoc(doc(db, "users", user.uid), { isPro: true });
+                setUserTier('Pro');
+                setIsPaymentOpen(false);
+              }
+            }
+          }).render('#paypal-button-container');
         }
-      })
-      .catch((error) => {
-        console.error("Error al volver de Google:", error.code);
-      });
+      };
+      document.body.appendChild(script);
+    }
+  }, [isPaymentOpen, user]);
 
-    // 2. Observador de estado (mantiene la sesión activa)
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -45,12 +56,16 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // Función de login: PANTALLA COMPLETA (Evita el error 401)
-  const handleLogin = () => signInWithRedirect(auth, googleProvider);
+  // VOLVEMOS AL POPUP QUE ES EL QUE TE ANDA
+  const handleLogin = () => {
+    googleProvider.setCustomParameters({ prompt: 'select_account' });
+    signInWithPopup(auth, googleProvider).catch(err => {
+      if(err.code === 'auth/popup-blocked') alert("Habilitá los popups en el navegador, fiera.");
+    });
+  };
 
-  // Validación de códigos arreglada
   const handleRedeemCode = async (code: string) => {
-    if (!user) return alert("Iniciá sesión primero.");
+    if (!user) return alert("Logueate primero.");
     try {
       const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
       const snap = await getDocs(q);
@@ -61,13 +76,11 @@ function App() {
         await updateDoc(doc(db, "users", user.uid), { isPro: true });
         setUserTier('Pro');
         setIsPaymentOpen(false);
-        alert("¡Cuenta Pro Activada!");
+        alert("¡Código canjeado! Ya tenés el peritaje completo.");
       } else {
         alert("Código inválido o ya usado.");
       }
-    } catch (e) {
-      alert("Error al conectar con la base de datos.");
-    }
+    } catch (e) { alert("Error de base de datos."); }
   };
 
   return (
@@ -77,23 +90,13 @@ function App() {
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 xl:col-span-4">
             <Hero />
-            <div className="bg-white rounded-[2.5rem] p-8 border mt-8 shadow-xl">
-              <AuditTool 
-                isAuditing={isAuditing}
-                onAudit={() => {
-                  setIsAuditing(true);
-                  setTimeout(() => {
-                    setResult({ 
-                      score: 25, 
-                      findings: [
-                        {id: 1, level: 'critical', title: 'Riesgo Biométrico', description: 'Extracción facial detectada.'}
-                      ]
-                    });
-                    setIsAuditing(false);
-                  }, 2000);
-                }} 
-              />
-            </div>
+            <AuditTool isAuditing={isAuditing} onAudit={() => {
+              setIsAuditing(true);
+              setTimeout(() => {
+                setResult({ score: 25, findings: [{id: 1, level: 'critical', title: 'Biometría', description: 'Extracción facial detectada.'}] });
+                setIsAuditing(false);
+              }, 2000);
+            }} />
           </div>
           <div className="col-span-12 xl:col-span-8">
             {result && (
