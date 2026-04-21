@@ -16,6 +16,14 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
+  // Cargar SDK de PayPal automáticamente
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://www.paypal.com/sdk/js?client-id=test&currency=USD"; // Reemplazá 'test' por tu Client ID de PayPal
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -34,22 +42,40 @@ function App() {
 
   const handleLogin = () => signInWithPopup(auth, googleProvider);
 
-  const handleRedeemCode = async () => {
-    const code = prompt("Ingresá tu código de activación:");
-    if (!code || !user) return;
+  // ESTA ES LA FUNCIÓN QUE CORREGÍ PARA QUE EL CÓDIGO ANDE
+  const handleRedeemCode = async (code: string) => {
+    if (!code || !user) return alert("Iniciá sesión primero.");
     
-    const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
-    const snap = await getDocs(q);
-    
-    if (!snap.empty) {
-      const coupon = snap.docs[0];
-      await updateDoc(doc(db, "coupons", coupon.id), { used: true, usedBy: user.uid });
-      await updateDoc(doc(db, "users", user.uid), { isPro: true });
-      setUserTier('Pro');
-      alert("¡Activado! Ya podés ver el reporte completo.");
-      setIsPaymentOpen(false);
-    } else {
-      alert("Código inválido.");
+    try {
+      // Buscamos el código exacto en la colección 'coupons' que esté sin usar
+      const q = query(
+        collection(db, "coupons"), 
+        where("code", "==", code.trim().toUpperCase()), 
+        where("used", "==", false)
+      );
+      
+      const snap = await getDocs(q);
+      
+      if (!snap.empty) {
+        const couponDoc = snap.docs[0];
+        // 1. Marcamos el cupón como usado
+        await updateDoc(doc(db, "coupons", couponDoc.id), { 
+          used: true, 
+          usedBy: user.uid,
+          usedAt: new Date().toISOString()
+        });
+        // 2. Le damos el rango Pro al usuario en Firestore
+        await updateDoc(doc(db, "users", user.uid), { isPro: true });
+        
+        setUserTier('Pro');
+        alert("¡Código aceptado! Ya tenés acceso Pro.");
+        setIsPaymentOpen(false);
+      } else {
+        alert("Código incorrecto, ya usado o inexistente.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error al validar el código.");
     }
   };
 
@@ -58,12 +84,12 @@ function App() {
     setTimeout(() => {
       setResult({
         score: 25,
-        summary: "Política altamente invasiva. Realiza extracción masiva de biometría y comportamiento.",
+        summary: "Política altamente invasiva detectada por la IA.",
         jurisdiction: "EUROPA / ARGENTINA (MENDOZA)",
         findings: [
-          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Recolección masiva de datos faciales y voz sin opción de exclusión.' },
-          { id: 2, level: 'critical', title: 'Monitoreo de Dispositivo', description: 'Extracción de telemetría y metadatos de archivos.' },
-          { id: 3, level: 'warning', title: 'Jurisdicción Extranjera', description: 'Conflictos legales resueltos fuera de Argentina.' }
+          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Extracción de datos faciales detectada.' },
+          { id: 2, level: 'critical', title: 'Monitoreo de Dispositivo', description: 'Acceso a metadatos privados del sistema.' },
+          { id: 3, level: 'warning', title: 'Jurisdicción', description: 'Conflictos fuera de Argentina.' }
         ]
       });
       setIsAuditing(false);
@@ -96,11 +122,10 @@ function App() {
         </div>
       </main>
 
-      {/* Este modal ya tiene tus links de Mercado Pago y el botón de WhatsApp */}
       <PaymentModal 
         isOpen={isPaymentOpen} 
         onClose={() => setIsPaymentOpen(false)} 
-        onSuccess={handleRedeemCode} 
+        onRedeemCode={handleRedeemCode} // Conectamos la función arreglada
       />
     </div>
   );
