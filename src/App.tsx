@@ -24,25 +24,21 @@ function App() {
           { 
             id: 1, 
             level: 'critical', 
+            color: 'red', // <--- Agregamos el color explícito para que no rompa
             title: 'Privacidad y Datos Biométricos', 
-            description: 'TikTok recolecta patrones de voz y faciales. En Argentina, esto requiere un consentimiento explícito que no está claramente detallado para menores.' 
+            description: 'TikTok recolecta patrones de voz y faciales. En Argentina, esto requiere un consentimiento explícito que no está claramente detallado.' 
           },
           { 
             id: 2, 
             level: 'warning', 
+            color: 'amber',
             title: 'Jurisdicción y Ley Aplicable', 
-            description: 'La política menciona tribunales de Singapur y leyes de California, lo cual puede ser abusivo para consumidores argentinos.' 
-          },
-          { 
-            id: 3, 
-            level: 'info', 
-            title: 'Entrenamiento de IA', 
-            description: 'Se especifica el uso de contenido generado por el usuario para mejorar algoritmos de recomendación y modelos de lenguaje.' 
+            description: 'La política menciona tribunales de Singapur, lo cual puede ser abusivo para consumidores argentinos.' 
           }
         ],
-        summary: `Análisis exhaustivo finalizado para: ${typeof source === 'string' ? 'Política de TikTok' : source.name}. Se detectaron riesgos críticos en materia de biometría.`,
+        summary: `Análisis exhaustivo finalizado para: ${typeof source === 'string' ? 'Política de TikTok' : source.name}.`,
         iaTraining: true,
-        jurisdiction: "MENDOZA / JURISDICCIÓN INTERNACIONAL",
+        jurisdiction: "MENDOZA / ARGENTINA",
         details: {
           complexity: "Alta",
           timestamp: new Date().toLocaleTimeString()
@@ -77,13 +73,14 @@ function App() {
                   result={result} 
                   onReset={() => setResult(null)} 
                   userTier="Free"
+                  onExport={() => alert('Exportando reporte...')}
                 />
               </div>
             </div>
           </div>
         ) : activeView === 'history' ? (
           <div className="max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-500">
-            <HistoryView history={history} onSelectResult={(res) => {
+            <HistoryView history={history} onSelectResult={(res: any) => {
               setResult(res);
               setActiveView('audit');
             }} />
