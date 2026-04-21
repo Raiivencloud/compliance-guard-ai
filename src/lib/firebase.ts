@@ -16,5 +16,5 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
-// ESTO ES CLAVE: Exponemos la db para el script
+// ESTO PERMITE QUE EL BOTÓN SECRETO FUNCIONE
 (window as any).db = db;
