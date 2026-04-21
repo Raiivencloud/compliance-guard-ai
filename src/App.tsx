@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, googleProvider } from './lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
@@ -16,7 +16,6 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
-  // 1. Escuchar la sesión de forma constante
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -26,31 +25,25 @@ function App() {
         if (userSnap.exists()) {
           setUserTier(userSnap.data().isPro ? 'Pro' : 'Free');
         } else {
-          // Si el usuario se loguea por primera vez, lo creamos
           await setDoc(userRef, { email: currentUser.email, isPro: false });
           setUserTier('Free');
         }
-      } else {
-        setUserTier('Free');
       }
     });
     return () => unsubscribe();
   }, []);
 
-  // 2. Función de Login con manejo de Pop-ups
   const handleLogin = async () => {
     try {
+      // Forzamos la selección de cuenta para limpiar errores previos
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, googleProvider);
     } catch (error: any) {
-      if (error.code === 'auth/popup-blocked') {
-        alert("El navegador bloqueó la ventana de inicio. Por favor, permití los pop-ups para esta web.");
-      } else {
-        alert("Error al conectar con Google: " + error.message);
-      }
+      console.error("Error Google Auth:", error.code);
+      alert("Error al conectar: " + error.message);
     }
   };
 
-  // 3. Validación de Códigos (Firestore)
   const handleRedeemCode = async (code: string) => {
     if (!user) return alert("Iniciá sesión primero.");
     try {
@@ -63,43 +56,46 @@ function App() {
         await updateDoc(doc(db, "users", user.uid), { isPro: true });
         setUserTier('Pro');
         setIsPaymentOpen(false);
-        alert("¡Código canjeado con éxito! Ya sos Pro.");
+        alert("¡Cuenta Pro Activada!");
       } else {
-        alert("Ese código no es válido o ya fue usado.");
+        alert("Código inválido o ya usado.");
       }
     } catch (e) {
-      alert("Hubo un problema al conectar con la base de datos.");
+      alert("Error de conexión con la base de datos.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <Header 
         isLoggedIn={!!user} 
         onLogin={handleLogin} 
+        onLogout={() => signOut(auth)}
         userPhoto={user?.photoURL} 
       />
       
-      <main className="max-w-7xl mx-auto pt-32 px-4">
+      <main className="max-w-7xl mx-auto pt-32 pb-20 px-4">
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 xl:col-span-4">
             <Hero />
-            <AuditTool 
-              isAuditing={isAuditing}
-              onAudit={() => {
-                setIsAuditing(true);
-                setTimeout(() => {
-                  setResult({ 
-                    score: 25, 
-                    findings: [
-                      {id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Extracción facial detectada.'},
-                      {id: 2, level: 'critical', title: 'Monitoreo Pro', description: 'Acceso a metadatos privados.'}
-                    ]
-                  });
-                  setIsAuditing(false);
-                }, 2000);
-              }} 
-            />
+            <div className="bg-white rounded-[2.5rem] p-8 border mt-8 shadow-xl">
+              <AuditTool 
+                isAuditing={isAuditing}
+                onAudit={() => {
+                  setIsAuditing(true);
+                  setTimeout(() => {
+                    setResult({ 
+                      score: 25, 
+                      findings: [
+                        {id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Extracción facial detectada.'},
+                        {id: 2, level: 'critical', title: 'Monitoreo Pro', description: 'Acceso a metadatos privados.'}
+                      ]
+                    });
+                    setIsAuditing(false);
+                  }, 2000);
+                }} 
+              />
+            </div>
           </div>
 
           <div className="col-span-12 xl:col-span-8">
@@ -107,6 +103,7 @@ function App() {
               <ResultsOverview 
                 result={result} 
                 userTier={userTier} 
+                onReset={() => setResult(null)}
                 onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} 
               />
             )}
