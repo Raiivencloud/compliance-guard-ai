@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db } from './lib/firebase';
+// Importamos todo lo necesario desde tu propia configuración de firebase
+import { auth, db, googleProvider } from './lib/firebase';
 import { collection, addDoc, query, where, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
-import { onAuthStateChanged, signOut, signInWithPopup, googleProvider } from 'firebase/auth';
+import { onAuthStateChanged, signOut, signInWithPopup } from 'firebase/auth';
 
-// RUTAS CORREGIDAS SEGÚN TUS CARPETAS
+// RUTAS SEGÚN TU ESTRUCTURA DE CARPETAS (ff58f2)
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
 import AuditTool from './components/landing/AuditTool';
@@ -27,14 +28,24 @@ function App() {
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
+          // Buscamos el campo isPro que configuramos en Firestore
           setUserTier(userSnap.data().isPro ? 'Pro' : 'Free');
         } else {
+          // Si el usuario es nuevo, lo creamos como Free
           await setDoc(userRef, { email: currentUser.email, isPro: false });
         }
       }
     });
     return () => unsubscribe();
   }, []);
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Error en login:", error);
+    }
+  };
 
   const generarStockVip = async () => {
     if (!confirm("¿Generar 100 llaves nuevas en Firebase?")) return;
@@ -44,24 +55,30 @@ function App() {
       
       for (let i = 0; i < 100; i++) {
         const llave = `${segment()}-${segment()}-${segment()}`;
-        await addDoc(collection(db, "coupons"), { code: llave, used: false, createdAt: new Date() });
+        // Mantenemos "coupons" como en tu base de datos ff6b1e
+        await addDoc(collection(db, "coupons"), { 
+          code: llave, 
+          used: false, 
+          createdAt: new Date().toISOString() 
+        });
       }
-      alert("¡Hecho! Revisa la consola (F12) para copiar la lista.");
+      alert("¡100 cupones generados con éxito!");
     } catch (e) { alert("Error: " + e); }
   };
 
   const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
+    // Simulación del peritaje potente de esta mañana
     setTimeout(() => {
       setResult({
         score: 25,
-        summary: "Política altamente invasiva y de alto riesgo. Realiza extracción masiva de biometría y comportamiento.",
-        jurisdiction: "ESPACIO ECONÓMICO EUROPEO / ARGENTINA",
+        summary: "Política altamente invasiva. Realiza extracción masiva de biometría y comportamiento para perfilado e IA.",
+        jurisdiction: "EUROPA / ARGENTINA (MENDOZA)",
         findings: [
-          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Recolección masiva de datos faciales y patrones de voz sin opción de exclusión.' },
-          { id: 2, level: 'critical', title: 'Monitoreo de Dispositivo', description: 'Extracción profunda de telemetría, ritmos de pulsación y metadatos de archivos.' },
-          { id: 3, level: 'warning', title: 'Jurisdicción Extranjera', description: 'Los conflictos legales se resuelven fuera de Argentina, invalidando protecciones locales.' },
-          { id: 4, level: 'warning', title: 'Cesión a Terceros', description: 'Los perfiles de comportamiento son compartidos con socios comerciales no identificados.' }
+          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Escaneo masivo de rostro y voz sin opción de exclusión.' },
+          { id: 2, level: 'critical', title: 'Monitoreo Profundo', description: 'Extracción de telemetría, ritmos de teclado y metadatos privados.' },
+          { id: 3, level: 'warning', title: 'Jurisdicción Extranjera', description: 'Conflictos resueltos fuera de Argentina, anulando defensas locales.' },
+          { id: 4, level: 'warning', title: 'Venta de Perfiles', description: 'Cesión de datos a brokers comerciales para publicidad dirigida.' }
         ]
       });
       setIsAuditing(false);
@@ -73,7 +90,7 @@ function App() {
       <Header 
         onViewChange={setActiveView} 
         isLoggedIn={!!user} 
-        onLogin={() => signInWithPopup(auth, googleProvider)} 
+        onLogin={handleLogin} 
         userPhoto={user?.photoURL} 
       />
       
@@ -95,21 +112,25 @@ function App() {
                 onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} 
               />
             ) : (
-              <div className="h-[500px] flex items-center justify-center border-2 border-dashed rounded-[2.5rem] text-slate-400">
-                {isAuditing ? "Analizando..." : "Subí un archivo para empezar"}
+              <div className="h-[500px] flex items-center justify-center border-2 border-dashed rounded-[2.5rem] text-slate-400 bg-white">
+                {isAuditing ? "Analizando con IA..." : "Sube una URL o PDF para iniciar el peritaje"}
               </div>
             )}
           </div>
         </div>
       </main>
 
-      <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} onSuccess={() => setUserTier('Pro')} />
+      <PaymentModal 
+        isOpen={isPaymentOpen} 
+        onClose={() => setIsPaymentOpen(false)} 
+        onSuccess={() => setUserTier('Pro')} 
+      />
 
       <button 
         onClick={generarStockVip} 
         className="fixed bottom-2 right-2 opacity-0 hover:opacity-100 text-[10px] text-slate-400"
       >
-        ADMIN_GEN
+        ADMIN_GEN_KEYS
       </button>
     </div>
   );
