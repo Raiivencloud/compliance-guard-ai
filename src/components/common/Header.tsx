@@ -1,6 +1,18 @@
 import { Shield, LayoutDashboard, History, Settings, Globe, LogOut, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-const useTranslation = () => ({ t: (key: string) => key });
+const useTranslation = () => ({ 
+  t: (key: string) => {
+    const texts: any = {
+      'nav.audit': 'Auditoría',
+      'nav.history': 'Historial',
+      'nav.pricing': 'Precios',
+      'nav.login': 'Iniciar Sesión',
+      'nav.logout': 'Cerrar Sesión',
+      'user.pro': 'Plan Pro'
+    };
+    return texts[key] || key;
+  }
+});
 import { cn } from '../../lib/utils';
 
 type View = 'audit' | 'history' | 'policy' | 'integrations';
