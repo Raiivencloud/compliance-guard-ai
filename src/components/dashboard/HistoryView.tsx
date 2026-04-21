@@ -1,5 +1,5 @@
 import { Clock, FileText, ArrowUpRight } from 'lucide-react';
-import { useTranslation } from '../../hooks/useTranslation';
+const useTranslation = () => ({ t: (key: string) => key });
 import type { AuditResult } from '../../types';
 
 interface HistoryViewProps {
