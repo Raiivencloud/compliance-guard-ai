@@ -12,12 +12,11 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
 
-  // Función principal de Auditoría
   const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
-    setResult(null); // Limpiamos pantalla para que se vea la carga
+    setResult(null);
 
-    // Simulamos el tiempo de procesamiento de la IA (3 segundos)
+    // Simulamos proceso profundo de IA
     setTimeout(() => {
       const mockResult = {
         score: 85,
@@ -25,34 +24,32 @@ function App() {
           { 
             id: 1, 
             level: 'critical', 
-            title: 'Datos Biométricos y Privacidad', 
-            description: 'Se detectó recolección de huellas faciales y patrones de voz sin una cláusula clara de consentimiento para usuarios en Argentina.' 
+            title: 'Privacidad y Datos Biométricos', 
+            description: 'TikTok recolecta patrones de voz y faciales. En Argentina, esto requiere un consentimiento explícito que no está claramente detallado para menores.' 
           },
           { 
             id: 2, 
             level: 'warning', 
-            title: 'Transferencia de Datos', 
-            description: 'La política permite el envío de datos a servidores en jurisdicciones con estándares de protección menores a los locales.' 
+            title: 'Jurisdicción y Ley Aplicable', 
+            description: 'La política menciona tribunales de Singapur y leyes de California, lo cual puede ser abusivo para consumidores argentinos.' 
           },
           { 
             id: 3, 
             level: 'info', 
-            title: 'Derechos ARCO', 
-            description: 'El documento detalla correctamente los pasos para solicitar la eliminación de datos, cumpliendo con la normativa estándar.' 
+            title: 'Entrenamiento de IA', 
+            description: 'Se especifica el uso de contenido generado por el usuario para mejorar algoritmos de recomendación y modelos de lenguaje.' 
           }
         ],
-        summary: `Análisis profundo completado con éxito para: ${typeof source === 'string' ? 'URL de Política' : source.name}. Se recomienda revisar las secciones marcadas en rojo para evitar sanciones legales.`,
+        summary: `Análisis exhaustivo finalizado para: ${typeof source === 'string' ? 'Política de TikTok' : source.name}. Se detectaron riesgos críticos en materia de biometría.`,
         iaTraining: true,
-        jurisdiction: "Internacional / Argentina",
+        jurisdiction: "MENDOZA / JURISDICCIÓN INTERNACIONAL",
         details: {
           complexity: "Alta",
-          wordCount: "1,200+ palabras analizadas",
           timestamp: new Date().toLocaleTimeString()
         }
       };
 
       setResult(mockResult);
-      // Guardamos en el historial para que la pestaña "Historial" no esté vacía
       setHistory(prev => [mockResult, ...prev]);
       setIsAuditing(false);
     }, 3000);
@@ -60,16 +57,45 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 selection:bg-blue-100">
-      {/* Header con cambio de vista */}
       <Header onViewChange={setActiveView} />
       
       <main className="max-w-7xl mx-auto pt-32 pb-20 px-4">
         {activeView === 'audit' ? (
-          /* Grilla de 12 columnas: 4 para el Hero/Tool y 8 para Resultados */
           <div className="grid grid-cols-12 gap-8">
-            {/* Columna Izquierda: Hero y Herramienta */}
             <div className="col-span-12 xl:col-span-4 space-y-8">
               <div className="animate-in fade-in slide-in-from-left-4 duration-700">
                 <Hero />
               </div>
-              <div className="bg
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+                <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
+              </div>
+            </div>
+
+            <div className="col-span-12 xl:col-span-8">
+              <div className="animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
+                <ResultsOverview 
+                  result={result} 
+                  onReset={() => setResult(null)} 
+                  userTier="Free"
+                />
+              </div>
+            </div>
+          </div>
+        ) : activeView === 'history' ? (
+          <div className="max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-500">
+            <HistoryView history={history} onSelectResult={(res) => {
+              setResult(res);
+              setActiveView('audit');
+            }} />
+          </div>
+        ) : (
+          <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-top-4 duration-500">
+            <SettingsView />
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default App;
