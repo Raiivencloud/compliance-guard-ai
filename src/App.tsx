@@ -1,18 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
 import AuditTool from './components/landing/AuditTool';
 import ResultsOverview from './components/dashboard/ResultsOverview';
 import HistoryView from './components/dashboard/HistoryView';
 import SettingsView from './components/dashboard/SettingsView';
-import PaymentModal from './components/modals/PaymentModal'; // <--- Importante
+import PaymentModal from './components/modals/PaymentModal';
 
 function App() {
   const [activeView, setActiveView] = useState('audit');
   const [isAuditing, setIsAuditing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false); // <--- Estado del modal
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [userTier, setUserTier] = useState('Free');
+
+  // Recuperar estado premium al cargar
+  useEffect(() => {
+    const isPro = localStorage.getItem('audit_premium') === 'true';
+    if (isPro) setUserTier('Pro');
+  }, []);
+
+  const handlePaymentSuccess = () => {
+    setUserTier('Pro');
+    setIsPaymentOpen(false);
+    localStorage.setItem('audit_premium', 'true');
+  };
 
   const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
@@ -22,13 +35,13 @@ function App() {
         score: 64,
         findings: [
           { id: 1, level: 'critical', color: 'red', title: 'Recolección de Biometría', description: 'Se detectó procesamiento de huellas faciales sin consentimiento explícito según Ley 25.326.' },
-          { id: 2, level: 'critical', color: 'red', title: 'Transferencia a Terceros', description: 'Los datos se comparten con entidades en jurisdicciones sin niveles de protección adecuados.' },
+          { id: 2, level: 'critical', color: 'red', title: 'Transferencia a Terceros', description: 'Los datos se comparten con entidades fuera de jurisdicción segura.' },
           { id: 3, level: 'warning', color: 'amber', title: 'Jurisdicción Abusiva', description: 'Cláusula de litigio en el extranjero detectada.' }
         ],
-        summary: `AUDITORÍA FINALIZADA: El documento presenta riesgos legales elevados. Se recomienda revisión por equipo legal.`,
+        summary: "Auditoría finalizada. Riesgos detectados en materia de privacidad y biometría.",
         iaTraining: true,
         jurisdiction: "MENDOZA / ARGENTINA",
-        details: { complexity: "Muy Alta", timestamp: new Date().toLocaleString('es-AR') }
+        details: { complexity: "Alta", timestamp: new Date().toLocaleString('es-AR') }
       };
       setResult(mockResult);
       setHistory(prev => [mockResult, ...prev]);
@@ -37,7 +50,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-blue-100">
+    <div className="min-h-screen bg-slate-50">
       <Header onViewChange={setActiveView} />
       
       <main className="max-w-7xl mx-auto pt-32 pb-20 px-4">
@@ -55,16 +68,16 @@ function App() {
                 <ResultsOverview 
                   result={result} 
                   onReset={() => setResult(null)} 
-                  userTier="Free"
-                  onExport={() => setIsPaymentOpen(true)} // <--- AQUÍ: Abrimos el modal en vez del alert
+                  userTier={userTier} 
+                  onExport={() => userTier === 'Pro' ? alert('Generando PDF...') : setIsPaymentOpen(true)}
                 />
               ) : isAuditing ? (
-                <div className="h-[500px] flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed">
+                <div className="h-[500px] flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-slate-300">
                   <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-                  <p>Analizando...</p>
+                  <p className="text-slate-500 font-bold animate-pulse">Analizando política legal...</p>
                 </div>
               ) : (
-                <div className="h-[500px] flex items-center justify-center bg-white/50 rounded-3xl border border-dashed border-slate-200 text-slate-400">
+                <div className="h-[500px] flex items-center justify-center bg-white/50 rounded-3xl border border-dashed border-slate-200 text-slate-400 font-medium">
                    Esperando análisis legal...
                 </div>
               )}
@@ -77,10 +90,10 @@ function App() {
         )}
       </main>
 
-      {/* MODAL DE PAGO */}
       <PaymentModal 
         isOpen={isPaymentOpen} 
         onClose={() => setIsPaymentOpen(false)} 
+        onSuccess={handlePaymentSuccess} 
       />
     </div>
   );
