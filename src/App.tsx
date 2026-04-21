@@ -1,124 +1,129 @@
 import React, { useState, useEffect } from 'react';
-import { auth, googleProvider, db } from './lib/firebase';
-import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-
-import Header from './components/common/Header';
-import Hero from './components/landing/Hero';
-import AuditTool from './components/landing/AuditTool';
+import { auth, db } from './lib/firebase';
+import { collection, addDoc, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import Sidebar from './components/layout/Sidebar';
+import DashboardHeader from './components/dashboard/DashboardHeader';
+import AuditSection from './components/dashboard/AuditSection';
 import ResultsOverview from './components/dashboard/ResultsOverview';
-import PaymentModal from './components/modals/PaymentModal';
-
-type UserTier = 'Free' | 'Pro';
+import SettingsView from './components/dashboard/SettingsView';
 
 function App() {
-  const [activeView, setActiveView] = useState('audit');
   const [user, setUser] = useState<any>(null);
-  const [userTier, setUserTier] = useState<UserTier>('Free');
+  const [userTier, setUserTier] = useState<'Free' | 'Pro'>('Free');
+  const [activeTab, setActiveTab] = useState('audit');
   const [isAuditing, setIsAuditing] = useState(false);
   const [result, setResult] = useState<any>(null);
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          setUserTier(userSnap.data().isPro ? 'Pro' : 'Free');
-        } else {
-          await setDoc(userRef, { email: currentUser.email, isPro: false });
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      if (user) {
+        // Verifica si el usuario es Pro en la nueva base de datos
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserTier(userDoc.data().isPro ? 'Pro' : 'Free');
         }
       }
     });
     return () => unsubscribe();
   }, []);
 
-  // --- FUNCIÓN SECRETA PARA GENERAR 100 LLAVES ---
   const generarStockVip = async () => {
-    if (!confirm("¿Generar 100 llaves nuevas en Firebase?")) return;
-    const { collection, addDoc } = await import('firebase/firestore');
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const segment = () => Array.from({length: 4}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-    
     try {
-      const nuevasLlaves: string[] = [];
-      for (let i = 0; i < 100; i++) {
-        const llave = `${segment()}-${segment()}-${segment()}`;
-        await setDoc(doc(db, "coupons", llave), { used: false, createdAt: new Date() });
-        nuevasLlaves.push(llave);
+      const newCoupons = Array.from({ length: 100 }, () => ({
+        code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+        isUsed: false,
+        value: "premium",
+        createdAt: new Date().toISOString()
+      }));
+
+      for (const coupon of newCoupons) {
+        // Mantenemos "coupons" como pediste
+        await addDoc(collection(db, "coupons"), coupon);
       }
-      console.log("📋 TUS 100 LLAVES:\n" + nuevasLlaves.join("\n"));
-      alert("✅ ¡Hecho! Revisá la consola (F12) para copiar la lista.");
-    } catch (e) { alert("Error: " + e); }
-  };
-
-  const handleLogin = async () => {
-    if (user) { await signOut(auth); setUserTier('Free'); }
-    else { try { await signInWithPopup(auth, googleProvider); } catch (err) { console.error(err); } }
-  };
-
-  const handlePaymentSuccess = async () => {
-    if (!user) return alert("Logueate primero.");
-    const input = prompt("Ingresá tu llave (XXXX-XXXX-XXXX):");
-    if (!input) return;
-    const code = input.trim().toUpperCase();
-
-    try {
-      const couponRef = doc(db, "coupons", code);
-      const couponSnap = await getDoc(couponRef);
-      if (couponSnap.exists() && !couponSnap.data().used) {
-        await updateDoc(doc(db, "users", user.uid), { isPro: true });
-        await updateDoc(couponRef, { used: true, usedBy: user.email, date: new Date() });
-        setUserTier('Pro');
-        setIsPaymentOpen(false);
-        alert("¡Cuenta Pro Activada!");
-      } else { alert("Llave inválida o ya usada."); }
-    } catch (e) { alert("Error de conexión."); }
+      alert("¡100 cupones generados con éxito en la colección 'coupons'!");
+    } catch (error) {
+      console.error("Error al generar cupones:", error);
+    }
   };
 
   const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
+    // Simulamos la potencia del análisis que tenías antes
     setTimeout(() => {
       setResult({
-        score: 64,
-        findings: [{ id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Recolección de datos sin aviso.' }],
-        summary: "Análisis completado.",
-        jurisdiction: "MENDOZA / ARGENTINA"
+        score: 28,
+        summary: "Se han detectado múltiples vulnerabilidades críticas de privacidad y cláusulas legales abusivas.",
+        jurisdiction: "INTERNACIONAL / ARGENTINA",
+        findings: [
+          {
+            id: 1,
+            level: 'critical',
+            category: 'Privacidad',
+            title: 'Extracción de Datos Biométricos',
+            description: 'La plataforma recolecta patrones faciales y de voz para entrenamiento de modelos de IA sin posibilidad de revocación.'
+          },
+          {
+            id: 2,
+            level: 'critical',
+            category: 'Seguridad',
+            title: 'Monitoreo en Segundo Plano',
+            description: 'Extracción de metadatos de archivos locales y seguimiento de actividad fuera de la aplicación.'
+          },
+          {
+            id: 3,
+            level: 'warning',
+            category: 'Legal',
+            title: 'Renuncia a Jurisdicción Local',
+            description: 'El contrato obliga a resolver disputas en tribunales extranjeros, invalidando la Ley de Defensa al Consumidor.'
+          },
+          {
+            id: 4,
+            level: 'warning',
+            category: 'Privacidad',
+            title: 'Cesión de Perfil de Comportamiento',
+            description: 'Venta de perfiles psicológicos derivados del uso a brokers de datos no especificados.'
+          }
+        ]
       });
       setIsAuditing(false);
-    }, 2000);
+    }, 2500);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header onViewChange={setActiveView} isLoggedIn={!!user} onLogin={handleLogin} userPhoto={user?.photoURL} />
-      <main className="max-w-7xl mx-auto pt-32 pb-20 px-4">
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 xl:col-span-4">
-            <Hero />
-            <div className="bg-white rounded-[2.5rem] p-8 border mt-8 shadow-xl">
-              <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
+    <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
+      
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
+        
+        <DashboardHeader user={user} userTier={userTier} />
+        
+        <div className="flex-1 overflow-y-auto p-6 relative z-10">
+          {activeTab === 'audit' && (
+            <div className="space-y-6">
+              {!result ? (
+                <AuditSection onAudit={handleAudit} isAuditing={isAuditing} />
+              ) : (
+                <ResultsOverview 
+                  result={result} 
+                  userTier={userTier} 
+                  onReset={() => setResult(null)} 
+                />
+              )}
             </div>
-          </div>
-          <div className="col-span-12 xl:col-span-8">
-            {!isAuditing && result ? (
-              <ResultsOverview result={result} onReset={() => setResult(null)} userTier={userTier} onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} />
-            ) : (
-              <div className="h-[500px] flex items-center justify-center border-2 border-dashed rounded-[2.5rem] text-slate-400">
-                {isAuditing ? "Analizando..." : "Subí un archivo para empezar"}
-              </div>
-            )}
-          </div>
+          )}
+          
+          {activeTab === 'settings' && (
+            <SettingsView 
+              user={user} 
+              userTier={userTier} 
+              onGenerateCodes={generarStockVip} 
+            />
+          )}
         </div>
       </main>
-      <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} onSuccess={handlePaymentSuccess} />
-      
-      {/* BOTÓN SECRETO ABAJO A LA DERECHA */}
-      <button onClick={generarStockVip} className="fixed bottom-2 right-2 opacity-0 hover:opacity-100 text-[10px] text-slate-400">
-        ADMIN_GEN
-      </button>
     </div>
   );
 }
