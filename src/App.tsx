@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, googleProvider } from './lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { onAuthStateChanged, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
@@ -16,38 +16,7 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
-  // 1. CARGA DE PAYPAL Y PROCESO DE LOGIN
-  useEffect(() => {
-    // Pescar el resultado del redireccionamiento de Google
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) console.log("Usuario conectado vía redirect");
-      })
-      .catch(console.error);
-
-    // Carga de PayPal manual
-    if (isPaymentOpen && !(window as any).paypal) {
-      const script = document.createElement('script');
-      script.src = "https://www.paypal.com/sdk/js?client-id=test&currency=USD";
-      script.onload = () => {
-        if ((window as any).paypal) {
-          (window as any).paypal.Buttons({
-            style: { layout: 'horizontal', shape: 'pill', height: 48 },
-            onApprove: async () => {
-              if (user) {
-                await updateDoc(doc(db, "users", user.uid), { isPro: true });
-                setUserTier('Pro');
-                setIsPaymentOpen(false);
-              }
-            }
-          }).render('#paypal-button-container');
-        }
-      };
-      document.body.appendChild(script);
-    }
-  }, [isPaymentOpen, user]);
-
-  // 2. ESCUCHA DE CAMBIOS DE ESTADO
+  // 1. Escuchar la sesión de forma constante
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -57,57 +26,99 @@ function App() {
         if (userSnap.exists()) {
           setUserTier(userSnap.data().isPro ? 'Pro' : 'Free');
         } else {
+          // Si el usuario se loguea por primera vez, lo creamos
           await setDoc(userRef, { email: currentUser.email, isPro: false });
+          setUserTier('Free');
         }
+      } else {
+        setUserTier('Free');
       }
     });
     return () => unsubscribe();
   }, []);
 
+  // 2. Función de Login con manejo de Pop-ups
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error: any) {
+      if (error.code === 'auth/popup-blocked') {
+        alert("El navegador bloqueó la ventana de inicio. Por favor, permití los pop-ups para esta web.");
+      } else {
+        alert("Error al conectar con Google: " + error.message);
+      }
+    }
+  };
+
+  // 3. Validación de Códigos (Firestore)
   const handleRedeemCode = async (code: string) => {
     if (!user) return alert("Iniciá sesión primero.");
-    // BUSCA EN COLECCIÓN 'coupons' (Asegurate que se llame así en Firebase)
-    const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
-    const snap = await getDocs(q);
-    
-    if (!snap.empty) {
-      const couponDoc = snap.docs[0];
-      await updateDoc(doc(db, "coupons", couponDoc.id), { used: true, usedBy: user.uid });
-      await updateDoc(doc(db, "users", user.uid), { isPro: true });
-      setUserTier('Pro');
-      setIsPaymentOpen(false);
-      alert("¡Código Activado!");
-    } else {
-      alert("Código incorrecto o ya usado.");
+    try {
+      const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
+      const snap = await getDocs(q);
+      
+      if (!snap.empty) {
+        const couponDoc = snap.docs[0];
+        await updateDoc(doc(db, "coupons", couponDoc.id), { used: true, usedBy: user.uid });
+        await updateDoc(doc(db, "users", user.uid), { isPro: true });
+        setUserTier('Pro');
+        setIsPaymentOpen(false);
+        alert("¡Código canjeado con éxito! Ya sos Pro.");
+      } else {
+        alert("Ese código no es válido o ya fue usado.");
+      }
+    } catch (e) {
+      alert("Hubo un problema al conectar con la base de datos.");
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header isLoggedIn={!!user} onLogin={() => signInWithRedirect(auth, googleProvider)} userPhoto={user?.photoURL} />
+      <Header 
+        isLoggedIn={!!user} 
+        onLogin={handleLogin} 
+        userPhoto={user?.photoURL} 
+      />
+      
       <main className="max-w-7xl mx-auto pt-32 px-4">
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 xl:col-span-4">
             <Hero />
-            <AuditTool onAudit={() => {
-              setIsAuditing(true);
-              setTimeout(() => {
-                setResult({ score: 25, summary: "Análisis de Riesgo Crítico.", findings: [
-                  {id:1, level:'critical', title:'Biometría', description:'Extracción facial detectada.'},
-                  {id:2, level:'critical', title:'Telemetría', description:'Acceso a datos privados.'}
-                ]});
-                setIsAuditing(false);
-              }, 2000);
-            }} isAuditing={isAuditing} />
+            <AuditTool 
+              isAuditing={isAuditing}
+              onAudit={() => {
+                setIsAuditing(true);
+                setTimeout(() => {
+                  setResult({ 
+                    score: 25, 
+                    findings: [
+                      {id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Extracción facial detectada.'},
+                      {id: 2, level: 'critical', title: 'Monitoreo Pro', description: 'Acceso a metadatos privados.'}
+                    ]
+                  });
+                  setIsAuditing(false);
+                }, 2000);
+              }} 
+            />
           </div>
+
           <div className="col-span-12 xl:col-span-8">
             {result && (
-              <ResultsOverview result={result} userTier={userTier} onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} />
+              <ResultsOverview 
+                result={result} 
+                userTier={userTier} 
+                onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} 
+              />
             )}
           </div>
         </div>
       </main>
-      <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} onSuccess={handleRedeemCode} />
+
+      <PaymentModal 
+        isOpen={isPaymentOpen} 
+        onClose={() => setIsPaymentOpen(false)} 
+        onSuccess={handleRedeemCode} 
+      />
     </div>
   );
 }
