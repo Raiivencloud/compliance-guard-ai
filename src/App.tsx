@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// Importamos todo lo necesario desde tu propia configuración de firebase
 import { auth, db, googleProvider } from './lib/firebase';
-import { collection, addDoc, query, where, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
-import { onAuthStateChanged, signOut, signInWithPopup } from 'firebase/auth';
+import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 
-// RUTAS SEGÚN TU ESTRUCTURA DE CARPETAS (ff58f2)
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
 import AuditTool from './components/landing/AuditTool';
@@ -28,57 +26,50 @@ function App() {
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          // Buscamos el campo isPro que configuramos en Firestore
           setUserTier(userSnap.data().isPro ? 'Pro' : 'Free');
-        } else {
-          // Si el usuario es nuevo, lo creamos como Free
-          await setDoc(userRef, { email: currentUser.email, isPro: false });
         }
+      } else {
+        setUserTier('Free');
       }
     });
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = async () => {
+  const handleRedeemCode = async (code: string) => {
+    if (!user) return alert("Debes iniciar sesión");
     try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error("Error en login:", error);
-    }
-  };
-
-  const generarStockVip = async () => {
-    if (!confirm("¿Generar 100 llaves nuevas en Firebase?")) return;
-    try {
-      const chars = "ABCDEFGHIJKLMNPQRSTUVWXYZ23456789";
-      const segment = () => Array.from({length: 4}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+      const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
+      const querySnapshot = await getDocs(q);
       
-      for (let i = 0; i < 100; i++) {
-        const llave = `${segment()}-${segment()}-${segment()}`;
-        // Mantenemos "coupons" como en tu base de datos ff6b1e
-        await addDoc(collection(db, "coupons"), { 
-          code: llave, 
-          used: false, 
-          createdAt: new Date().toISOString() 
-        });
+      if (!querySnapshot.empty) {
+        const couponDoc = querySnapshot.docs[0];
+        // 1. Marcar cupón como usado
+        await updateDoc(doc(db, "coupons", couponDoc.id), { used: true, usedBy: user.uid });
+        // 2. Darle Pro al usuario
+        await updateDoc(doc(db, "users", user.uid), { isPro: true });
+        setUserTier('Pro');
+        alert("¡Código activado! Ahora eres Pro.");
+        setIsPaymentOpen(false);
+      } else {
+        alert("Código inválido o ya utilizado.");
       }
-      alert("¡100 cupones generados con éxito!");
-    } catch (e) { alert("Error: " + e); }
+    } catch (e) {
+      alert("Error al validar código.");
+    }
   };
 
   const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
-    // Simulación del peritaje potente de esta mañana
     setTimeout(() => {
       setResult({
         score: 25,
-        summary: "Política altamente invasiva. Realiza extracción masiva de biometría y comportamiento para perfilado e IA.",
+        summary: "Política altamente invasiva. Realiza extracción masiva de biometría y comportamiento.",
         jurisdiction: "EUROPA / ARGENTINA (MENDOZA)",
         findings: [
-          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Escaneo masivo de rostro y voz sin opción de exclusión.' },
-          { id: 2, level: 'critical', title: 'Monitoreo Profundo', description: 'Extracción de telemetría, ritmos de teclado y metadatos privados.' },
-          { id: 3, level: 'warning', title: 'Jurisdicción Extranjera', description: 'Conflictos resueltos fuera de Argentina, anulando defensas locales.' },
-          { id: 4, level: 'warning', title: 'Venta de Perfiles', description: 'Cesión de datos a brokers comerciales para publicidad dirigida.' }
+          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Recolección masiva de datos faciales y patrones de voz sin consentimiento.' },
+          { id: 2, level: 'critical', title: 'Monitoreo Profundo', description: 'Extracción de telemetría y metadatos de archivos privados.' },
+          { id: 3, level: 'warning', title: 'Jurisdicción Extranjera', description: 'Conflictos resueltos fuera de Argentina.' },
+          { id: 4, level: 'warning', title: 'Venta de Datos', description: 'Cesión de perfiles a brokers comerciales.' }
         ]
       });
       setIsAuditing(false);
@@ -86,11 +77,11 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <Header 
         onViewChange={setActiveView} 
         isLoggedIn={!!user} 
-        onLogin={handleLogin} 
+        onLogin={() => signInWithPopup(auth, googleProvider)} 
         userPhoto={user?.photoURL} 
       />
       
@@ -98,7 +89,7 @@ function App() {
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 xl:col-span-4">
             <Hero />
-            <div className="bg-white rounded-[2.5rem] p-8 border mt-8 shadow-xl">
+            <div className="bg-[#111] rounded-[2.5rem] p-8 border border-white/10 mt-8 shadow-2xl">
               <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
             </div>
           </div>
@@ -109,10 +100,11 @@ function App() {
                 result={result} 
                 onReset={() => setResult(null)} 
                 userTier={userTier} 
+                // Si no es Pro, abre el modal de pago
                 onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} 
               />
             ) : (
-              <div className="h-[500px] flex items-center justify-center border-2 border-dashed rounded-[2.5rem] text-slate-400 bg-white">
+              <div className="h-[500px] flex items-center justify-center border-2 border-dashed border-white/10 rounded-[2.5rem] text-slate-500 bg-[#111]">
                 {isAuditing ? "Analizando con IA..." : "Sube una URL o PDF para iniciar el peritaje"}
               </div>
             )}
@@ -123,15 +115,9 @@ function App() {
       <PaymentModal 
         isOpen={isPaymentOpen} 
         onClose={() => setIsPaymentOpen(false)} 
-        onSuccess={() => setUserTier('Pro')} 
+        onRedeemCode={handleRedeemCode}
+        userTier={userTier}
       />
-
-      <button 
-        onClick={generarStockVip} 
-        className="fixed bottom-2 right-2 opacity-0 hover:opacity-100 text-[10px] text-slate-400"
-      >
-        ADMIN_GEN_KEYS
-      </button>
     </div>
   );
 }
