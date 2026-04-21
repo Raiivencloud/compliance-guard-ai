@@ -11,23 +11,20 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: any) {
           <X size={24} />
         </button>
 
-        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white">
+        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white shadow-lg shadow-blue-200">
           <Zap size={32} fill="currentColor" />
         </div>
         
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Desbloqueá el Reporte</h2>
-        <p className="text-slate-500 text-sm mb-8">Elegí un método para obtener acceso Pro.</p>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Mejorar a Pro</h2>
+        <p className="text-slate-500 text-sm mb-8">Elegí un método para desbloquear el reporte legal completo.</p>
 
         <div className="space-y-3 mb-8">
-          {/* Mercado Pago */}
-          <a href="https://mpago.la/34c5p4F" target="_blank" rel="noreferrer" className="w-full py-4 bg-[#009EE3] text-white rounded-2xl font-bold flex items-center justify-center gap-3">
+          <a href="https://mpago.la/34c5p4F" target="_blank" rel="noreferrer" className="w-full py-4 bg-[#009EE3] text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition-all">
             <CreditCard size={20} /> MERCADO PAGO
           </a>
 
-          {/* Contenedor de PayPal */}
           <div id="paypal-button-container" className="min-h-[40px]"></div>
 
-          {/* WhatsApp */}
           <button onClick={() => window.open('https://wa.me/5492615000872')} className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold flex items-center justify-center gap-3">
             <MessageCircle size={20} /> WHATSAPP
           </button>
@@ -39,7 +36,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: any) {
               const code = prompt("Ingresá tu código de activación:");
               if (code) onSuccess(code);
             }}
-            className="w-full py-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-blue-600"
+            className="w-full py-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-colors"
           >
             TENGO UN CÓDIGO DE ACTIVACIÓN
           </button>
