@@ -1,6 +1,6 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD4DFwYz_i_pHq01JKXeW__J_Bj4p7fo8M",
@@ -14,9 +14,12 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 
-// Exportar servicios para usar en el resto de la app
+// Exportar servicios
 export const auth = getAuth(app);
-export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
+export const db = getFirestore(app);
+
+// ESTO PERMITE QUE EL BOTÓN SECRETO FUNCIONE
+(window as any).db = db;
 
 export default app;
