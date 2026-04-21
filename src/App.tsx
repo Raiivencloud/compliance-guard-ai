@@ -24,20 +24,21 @@ function App() {
   }, []);
 
   const handleLogin = () => {
-    setIsLoggedIn(true);
-    localStorage.setItem('user_session', 'true');
-    alert('Sesión iniciada correctamente.');
+    const nextStatus = !isLoggedIn;
+    setIsLoggedIn(nextStatus);
+    localStorage.setItem('user_session', nextStatus.toString());
+    alert(nextStatus ? 'Sesión iniciada correctamente' : 'Sesión cerrada');
   };
 
   const handlePaymentSuccess = () => {
-    const code = prompt("Ingresá el código de activación que recibiste por WhatsApp:");
+    const code = prompt("Por favor, ingresá el CÓDIGO DE ACTIVACIÓN:");
     if (code?.toUpperCase() === 'RAIIVEN') {
       setUserTier('Pro');
       localStorage.setItem('audit_premium', 'true');
       setIsPaymentOpen(false);
-      alert('¡Acceso PRO activado exitosamente!');
+      alert('¡Acceso Premium Activado! Ya podés ver el reporte completo.');
     } else if (code !== null) {
-      alert('Código incorrecto. Por favor, verificá con soporte.');
+      alert('Código incorrecto. Contactate con soporte si ya pagaste.');
     }
   };
 
@@ -48,50 +49,41 @@ function App() {
       const mockResult = {
         score: 64,
         findings: [
-          { id: 1, level: 'critical', color: 'red', title: 'Recolección de Biometría', description: 'TikTok recolecta huellas faciales y de voz sin consentimiento explícito según Ley 25.326.' },
-          { id: 2, level: 'critical', color: 'red', title: 'Transferencia a Terceros', description: 'Se detectó envío de datos a servidores fuera de jurisdicción segura.' },
-          { id: 3, level: 'warning', color: 'amber', title: 'Jurisdicción Abusiva', description: 'La política impone tribunales extranjeros.' }
+          { id: 1, level: 'critical', color: 'red', title: 'Privacidad Biométrica', description: 'Uso de datos faciales sin cláusulas de consentimiento explícito en Argentina.' },
+          { id: 2, level: 'critical', color: 'red', title: 'Jurisdicción', description: 'Los datos son enviados a servidores en Singapur, fuera de la protección local.' },
+          { id: 3, level: 'warning', color: 'amber', title: 'Cláusulas Abusivas', description: 'Se detectaron términos que impiden la defensa del consumidor.' }
         ],
-        summary: "Auditoría finalizada. Riesgos críticos detectados.",
+        summary: "Análisis finalizado con riesgos elevados detectados para TikTok.",
         iaTraining: true,
         jurisdiction: "MENDOZA / ARGENTINA",
-        details: { complexity: "Muy Alta", timestamp: new Date().toLocaleString('es-AR') }
+        details: { complexity: "Alta", timestamp: new Date().toLocaleString('es-AR') }
       };
       setResult(mockResult);
       setHistory(prev => [mockResult, ...prev]);
       setIsAuditing(false);
-    }, 2500);
+    }, 3000);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 selection:bg-blue-100">
       <Header onViewChange={setActiveView} isLoggedIn={isLoggedIn} onLogin={handleLogin} />
       <main className="max-w-7xl mx-auto pt-32 pb-20 px-4">
         {activeView === 'audit' ? (
           <div className="grid grid-cols-12 gap-8">
             <div className="col-span-12 xl:col-span-4 space-y-8">
               <Hero />
-              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-xl">
-                <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
-              </div>
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-xl"><AuditTool onAudit={handleAudit} isAuditing={isAuditing} /></div>
             </div>
             <div className="col-span-12 xl:col-span-8">
               {!isAuditing && result ? (
-                <ResultsOverview 
-                  result={result} 
-                  onReset={() => setResult(null)} 
-                  userTier={userTier} 
-                  onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)}
-                />
+                <ResultsOverview result={result} onReset={() => setResult(null)} userTier={userTier} onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} />
               ) : isAuditing ? (
                 <div className="h-[500px] flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-dashed border-slate-300">
                   <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-                  <p className="text-slate-500 font-bold animate-pulse">Analizando...</p>
+                  <p className="text-slate-500 font-black animate-pulse">Analizando política legal...</p>
                 </div>
               ) : (
-                <div className="h-[500px] flex items-center justify-center bg-white/50 rounded-[2.5rem] border border-dashed border-slate-200 text-slate-400">
-                   Esperando documento...
-                </div>
+                <div className="h-[500px] flex items-center justify-center bg-white/50 rounded-[2.5rem] border border-dashed border-slate-200 text-slate-400 font-medium italic">Esperando peritaje...</div>
               )}
             </div>
           </div>
