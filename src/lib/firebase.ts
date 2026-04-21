@@ -4,8 +4,8 @@ import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD4DFwYz_i_pHq01JKXeW__J_Bj4p7fo8M",
-  // USAMOS EL ID EXACTO QUE APARECE EN TU CONSOLA (Imagen bd0cc1)
-  authDomain: "compliance-guard-ai.firebaseapp.com",
+  // Probamos con el dominio .web.app que es el respaldo oficial
+  authDomain: "compliance-guard-ai.web.app", 
   projectId: "compliance-guard-ai",
   storageBucket: "compliance-guard-ai.appspot.com",
   messagingSenderId: "12567186833",
@@ -13,13 +13,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
-
 export const db = getFirestore(app);
 
 (window as any).db = db;
-
 export default app;
