@@ -1,7 +1,19 @@
 import React, { useState, useCallback } from 'react';
 import { Upload, RefreshCw, Zap, Globe } from 'lucide-react';
 import { cn } from '../../lib/utils';
-const useTranslation = () => ({ t: (key: string) => key });
+const useTranslation = () => ({ 
+  t: (key: string) => {
+    const texts: any = {
+      'audit.title': 'Comenzar Peritaje',
+      'audit.placeholder': 'Pegá la URL de los términos y condiciones...',
+      'audit.button': 'Analizar Ahora',
+      'audit.helper': 'Formatos soportados: URL, PDF, TXT',
+      'dropzone.title': 'Arrastrá tus archivos aquí',
+      'dropzone.sub': 'o hacé clic para buscar'
+    };
+    return texts[key] || key;
+  }
+});
 interface AuditToolProps {
   onAudit: (source: string | File) => void;
   isAuditing: boolean;
