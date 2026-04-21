@@ -1,7 +1,6 @@
 import { Settings, Check, Shield, Globe, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslation } from '../../hooks/useTranslation';
-
+const useTranslation = () => ({ t: (key: string) => key, language: 'es', setLanguage: () => {} });
 interface PolicyEngineViewProps {
   isDark: boolean;
   onToggleTheme: () => void;
