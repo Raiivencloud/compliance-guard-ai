@@ -2,7 +2,18 @@ import { motion } from 'framer-motion';
 import { Download, RefreshCw, ShieldCheck, Shield } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import FindingCard from './FindingCard';
-const useTranslation = () => ({ t: (key: string) => key });
+const useTranslation = () => ({ 
+  t: (key: string) => {
+    const texts: any = {
+      'results.score': 'Puntaje de Riesgo',
+      'results.critical': 'Hallazgos Críticos',
+      'results.summary': 'Resumen Ejecutivo',
+      'results.export': 'Exportar Informe',
+      'results.unlocked': 'Informe Completo Desbloqueado'
+    };
+    return texts[key] || key;
+  }
+});
 import type { AuditResult } from '../../types';
 
 interface ResultsOverviewProps {
