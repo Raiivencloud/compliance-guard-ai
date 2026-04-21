@@ -16,9 +16,20 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
-  // 1. PESCAR EL LOGIN AL VOLVER DE GOOGLE
   useEffect(() => {
-    getRedirectResult(auth).catch(console.error);
+    // 1. ESTO ES LO QUE ARREGLA LA PANTALLA COMPLETA
+    // Al recargar la página tras el login, esto captura al usuario.
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          console.log("Login exitoso tras pantalla completa");
+        }
+      })
+      .catch((error) => {
+        console.error("Error al volver de Google:", error.code);
+      });
+
+    // 2. Observador de estado (mantiene la sesión activa)
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -34,11 +45,13 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. FUNCIÓN PARA VALIDAR CÓDIGOS (Firestore)
+  // Función de login: PANTALLA COMPLETA (Evita el error 401)
+  const handleLogin = () => signInWithRedirect(auth, googleProvider);
+
+  // Validación de códigos arreglada
   const handleRedeemCode = async (code: string) => {
     if (!user) return alert("Iniciá sesión primero.");
     try {
-      // Buscamos en la colección 'coupons' como en tu foto ff6b1e
       const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
       const snap = await getDocs(q);
       
@@ -48,7 +61,7 @@ function App() {
         await updateDoc(doc(db, "users", user.uid), { isPro: true });
         setUserTier('Pro');
         setIsPaymentOpen(false);
-        alert("¡Código Activado! Ya sos Pro.");
+        alert("¡Cuenta Pro Activada!");
       } else {
         alert("Código inválido o ya usado.");
       }
@@ -57,29 +70,30 @@ function App() {
     }
   };
 
-  const handleAudit = () => {
-    setIsAuditing(true);
-    setTimeout(() => {
-      setResult({
-        score: 25,
-        summary: "Análisis de Riesgo Crítico detectado.",
-        findings: [
-          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Extracción facial sin aviso.' },
-          { id: 2, level: 'critical', title: 'Monitoreo Profundo', description: 'Acceso a metadatos del sistema.' }
-        ]
-      });
-      setIsAuditing(false);
-    }, 2000);
-  };
-
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header isLoggedIn={!!user} onLogin={() => signInWithRedirect(auth, googleProvider)} userPhoto={user?.photoURL} />
+      <Header isLoggedIn={!!user} onLogin={handleLogin} userPhoto={user?.photoURL} />
       <main className="max-w-7xl mx-auto pt-32 px-4 pb-20">
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 xl:col-span-4">
             <Hero />
-            <AuditTool isAuditing={isAuditing} onAudit={handleAudit} />
+            <div className="bg-white rounded-[2.5rem] p-8 border mt-8 shadow-xl">
+              <AuditTool 
+                isAuditing={isAuditing}
+                onAudit={() => {
+                  setIsAuditing(true);
+                  setTimeout(() => {
+                    setResult({ 
+                      score: 25, 
+                      findings: [
+                        {id: 1, level: 'critical', title: 'Riesgo Biométrico', description: 'Extracción facial detectada.'}
+                      ]
+                    });
+                    setIsAuditing(false);
+                  }, 2000);
+                }} 
+              />
+            </div>
           </div>
           <div className="col-span-12 xl:col-span-8">
             {result && (
@@ -92,11 +106,7 @@ function App() {
           </div>
         </div>
       </main>
-      <PaymentModal 
-        isOpen={isPaymentOpen} 
-        onClose={() => setIsPaymentOpen(false)} 
-        onSuccess={handleRedeemCode} 
-      />
+      <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} onSuccess={handleRedeemCode} />
     </div>
   );
 }
