@@ -14,16 +14,26 @@ function App() {
   const [history, setHistory] = useState<any[]>([]);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [userTier, setUserTier] = useState('Free');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const isPro = localStorage.getItem('audit_premium') === 'true';
+    const session = localStorage.getItem('user_session') === 'true';
     if (isPro) setUserTier('Pro');
+    if (session) setIsLoggedIn(true);
   }, []);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    localStorage.setItem('user_session', 'true');
+    alert('Sesión iniciada con éxito');
+  };
 
   const handlePaymentSuccess = () => {
     setUserTier('Pro');
     setIsPaymentOpen(false);
     localStorage.setItem('audit_premium', 'true');
+    alert('¡Modo Pro activado! Ya podés descargar tus reportes.');
   };
 
   const handleAudit = async (source: string | File) => {
@@ -35,9 +45,9 @@ function App() {
         findings: [
           { id: 1, level: 'critical', color: 'red', title: 'Recolección de Biometría', description: 'TikTok recolecta huellas faciales y de voz sin consentimiento explícito según Ley 25.326.' },
           { id: 2, level: 'critical', color: 'red', title: 'Transferencia a Terceros', description: 'Se detectó envío de datos a servidores fuera de jurisdicción segura.' },
-          { id: 3, level: 'warning', color: 'amber', title: 'Jurisdicción Abusiva', description: 'La política impone tribunales extranjeros, dificultando la defensa del consumidor.' }
+          { id: 3, level: 'warning', color: 'amber', title: 'Jurisdicción Abusiva', description: 'La política impone tribunales extranjeros.' }
         ],
-        summary: "Auditoría finalizada. Riesgos críticos detectados en materia de privacidad y biometría.",
+        summary: "Auditoría finalizada. Riesgos críticos detectados.",
         iaTraining: true,
         jurisdiction: "MENDOZA / ARGENTINA",
         details: { complexity: "Muy Alta", timestamp: new Date().toLocaleString('es-AR') }
@@ -45,18 +55,27 @@ function App() {
       setResult(mockResult);
       setHistory(prev => [mockResult, ...prev]);
       setIsAuditing(false);
-    }, 3000);
+    }, 2500);
+  };
+
+  const handleExport = () => {
+    if (userTier === 'Pro') {
+      alert('Generando PDF Premium... La descarga comenzará en instantes.');
+      window.print(); // Solución rápida para generar PDF
+    } else {
+      setIsPaymentOpen(true);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-blue-100">
-      <Header onViewChange={setActiveView} />
+    <div className="min-h-screen bg-slate-50">
+      <Header onViewChange={setActiveView} isLoggedIn={isLoggedIn} onLogin={handleLogin} />
       <main className="max-w-7xl mx-auto pt-32 pb-20 px-4">
         {activeView === 'audit' ? (
           <div className="grid grid-cols-12 gap-8">
             <div className="col-span-12 xl:col-span-4 space-y-8">
               <Hero />
-              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-xl shadow-blue-900/5">
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-xl">
                 <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
               </div>
             </div>
@@ -66,7 +85,7 @@ function App() {
                   result={result} 
                   onReset={() => setResult(null)} 
                   userTier={userTier} 
-                  onExport={() => userTier === 'Pro' ? alert('Generando PDF...') : setIsPaymentOpen(true)}
+                  onExport={handleExport}
                 />
               ) : isAuditing ? (
                 <div className="h-[500px] flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-dashed border-slate-300">
@@ -75,7 +94,7 @@ function App() {
                 </div>
               ) : (
                 <div className="h-[500px] flex items-center justify-center bg-white/50 rounded-[2.5rem] border border-dashed border-slate-200 text-slate-400 font-medium italic">
-                   Esperando documento o URL para iniciar peritaje...
+                   Esperando documento para iniciar peritaje...
                 </div>
               )}
             </div>
