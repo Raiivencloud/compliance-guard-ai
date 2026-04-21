@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { auth, db, googleProvider } from './lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
-import { jsPDF } from 'jspdf'; // Necesitás instalar esta librería: npm install jspdf
 
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
@@ -33,29 +32,12 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // GENERADOR DE PDF PROFESIONAL (No es una impresión de pantalla)
-  const downloadPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.text("Reporte de Peritaje Legal IA", 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Jurisdicción: ${result.jurisdiction}`, 20, 40);
-    doc.text(`Puntaje de Riesgo: ${result.score}/100`, 20, 50);
+  const handleLogin = () => signInWithPopup(auth, googleProvider);
+
+  const handleRedeemCode = async () => {
+    const code = prompt("Ingresá tu código de activación:");
+    if (!code || !user) return;
     
-    let y = 70;
-    result.findings.forEach((f: any) => {
-      doc.setFont("helvetica", "bold");
-      doc.text(`${f.title} (${f.level})`, 20, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(f.description, 20, y + 7, { maxWidth: 170 });
-      y += 25;
-    });
-
-    doc.save("Peritaje_Compliance_AI.pdf");
-  };
-
-  const handleRedeemCode = async (code: string) => {
-    if (!user) return alert("Iniciá sesión");
     const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
     const snap = await getDocs(q);
     
@@ -64,7 +46,7 @@ function App() {
       await updateDoc(doc(db, "coupons", coupon.id), { used: true, usedBy: user.uid });
       await updateDoc(doc(db, "users", user.uid), { isPro: true });
       setUserTier('Pro');
-      alert("¡Cuenta Pro activada!");
+      alert("¡Activado! Ya podés ver el reporte completo.");
       setIsPaymentOpen(false);
     } else {
       alert("Código inválido.");
@@ -76,11 +58,12 @@ function App() {
     setTimeout(() => {
       setResult({
         score: 25,
-        jurisdiction: "Mendoza, Argentina / Internacional",
+        summary: "Política altamente invasiva. Realiza extracción masiva de biometría y comportamiento.",
+        jurisdiction: "EUROPA / ARGENTINA (MENDOZA)",
         findings: [
-          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Extracción masiva de datos faciales detectada.' },
-          { id: 2, level: 'critical', title: 'Monitoreo de Dispositivo', description: 'Acceso a metadatos privados del sistema.' },
-          { id: 3, level: 'warning', title: 'Jurisdicción Extranjera', description: 'Cláusulas de arbitraje fuera del país.' }
+          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Recolección masiva de datos faciales y voz sin opción de exclusión.' },
+          { id: 2, level: 'critical', title: 'Monitoreo de Dispositivo', description: 'Extracción de telemetría y metadatos de archivos.' },
+          { id: 3, level: 'warning', title: 'Jurisdicción Extranjera', description: 'Conflictos legales resueltos fuera de Argentina.' }
         ]
       });
       setIsAuditing(false);
@@ -89,17 +72,15 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header 
-        isLoggedIn={!!user} 
-        onLogin={() => signInWithPopup(auth, googleProvider)} 
-        userPhoto={user?.photoURL} 
-      />
+      <Header isLoggedIn={!!user} onLogin={handleLogin} userPhoto={user?.photoURL} />
       
       <main className="max-w-7xl mx-auto pt-32 px-4">
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 xl:col-span-4">
             <Hero />
-            <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
+            <div className="bg-white rounded-[2.5rem] p-8 border mt-8 shadow-xl">
+              <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
+            </div>
           </div>
 
           <div className="col-span-12 xl:col-span-8">
@@ -107,18 +88,19 @@ function App() {
               <ResultsOverview 
                 result={result} 
                 userTier={userTier} 
-                // Si es Pro, baja el PDF real. Si no, abre pagos.
-                onExport={() => userTier === 'Pro' ? downloadPDF() : setIsPaymentOpen(true)} 
+                onReset={() => setResult(null)} 
+                onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} 
               />
             )}
           </div>
         </div>
       </main>
 
+      {/* Este modal ya tiene tus links de Mercado Pago y el botón de WhatsApp */}
       <PaymentModal 
         isOpen={isPaymentOpen} 
         onClose={() => setIsPaymentOpen(false)} 
-        onRedeemCode={handleRedeemCode}
+        onSuccess={handleRedeemCode} 
       />
     </div>
   );
