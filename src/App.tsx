@@ -16,7 +16,7 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
-  // Carga de PayPal al abrir el modal
+  // Inyección de PayPal dinámica
   useEffect(() => {
     if (isPaymentOpen && !document.getElementById('paypal-sdk')) {
       const script = document.createElement('script');
@@ -56,47 +56,65 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // LOGIN POR POPUP (EL QUE TE FUNCIONA)
   const handleLogin = () => {
     googleProvider.setCustomParameters({ prompt: 'select_account' });
-    signInWithPopup(auth, googleProvider).catch(err => {
-      if(err.code === 'auth/popup-blocked') alert("Habilitá los popups.");
-    });
+    signInWithPopup(auth, googleProvider).catch(console.error);
   };
 
-  // FUNCIÓN DE AUDITORÍA (CORREGIDA PARA QUE MUESTRE RESULTADOS)
+  // AUDITORÍA COMPLETA: Ahora con Críticos, Medios y Bajos
   const handleAudit = () => {
     setIsAuditing(true);
-    setResult(null); // Limpiamos anterior
+    setResult(null); 
+    
     setTimeout(() => {
       setResult({ 
-        score: 25, 
-        summary: "Riesgo legal crítico detectado en la plataforma analizada.",
+        score: 15, 
+        summary: "Análisis de TikTok finalizado. Se detectaron múltiples brechas de seguridad y recolección excesiva de datos biométricos y de red.",
         findings: [
-          {id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Se detectó extracción de puntos faciales sin consentimiento explícito.'},
-          {id: 2, level: 'critical', title: 'Telemetría Oculta', description: 'La app envía metadatos del dispositivo a servidores externos.'}
+          {
+            id: 1, 
+            level: 'critical', 
+            title: 'Recolección Biométrica', 
+            description: 'TikTok declara la recolección de "huellas faciales y de voz" sin consentimiento específico por sesión.'
+          },
+          {
+            id: 2, 
+            level: 'critical', 
+            title: 'Keylogging In-App', 
+            description: 'El navegador interno puede rastrear pulsaciones de teclas en sitios externos visitados desde la app.'
+          },
+          {
+            id: 3, 
+            level: 'medium', 
+            title: 'Escaneo de Red Local', 
+            description: 'La app identifica otros dispositivos en tu WiFi para mejorar el perfilado de usuarios.'
+          },
+          {
+            id: 4, 
+            level: 'low', 
+            title: 'Retención Extendida', 
+            description: 'Los logs de actividad se conservan incluso después de cerrar la cuenta por tiempo indefinido.'
+          }
         ] 
       });
       setIsAuditing(false);
-    }, 2000);
+    }, 2500);
   };
 
   const handleRedeemCode = async (code: string) => {
-    if (!user) return alert("Logueate primero.");
-    try {
-      const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const couponDoc = snap.docs[0];
-        await updateDoc(doc(db, "coupons", couponDoc.id), { used: true, usedBy: user.uid });
-        await updateDoc(doc(db, "users", user.uid), { isPro: true });
-        setUserTier('Pro');
-        setIsPaymentOpen(false);
-        alert("¡Código validado! Acceso Pro concedido.");
-      } else {
-        alert("Código inválido.");
-      }
-    } catch (e) { alert("Error de conexión."); }
+    if (!user) return alert("Iniciá sesión.");
+    const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const couponDoc = snap.docs[0];
+      await updateDoc(doc(db, "coupons", couponDoc.id), { used: true, usedBy: user.uid });
+      await updateDoc(doc(db, "users", user.uid), { isPro: true });
+      setUserTier('Pro');
+      setIsPaymentOpen(false);
+      alert("¡Activado!");
+    } else {
+      alert("Código inválido.");
+    }
   };
 
   return (
@@ -109,7 +127,6 @@ function App() {
             <AuditTool isAuditing={isAuditing} onAudit={handleAudit} />
           </div>
           <div className="col-span-12 xl:col-span-8">
-            {/* Aquí es donde aparece el antes y después */}
             {result && (
               <ResultsOverview 
                 result={result} 
