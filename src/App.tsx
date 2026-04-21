@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, googleProvider } from './lib/firebase';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
+import { jsPDF } from 'jspdf'; // Necesitás instalar esta librería: npm install jspdf
 
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
@@ -24,30 +25,66 @@ function App() {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           setUserTier(userSnap.data().isPro ? 'Pro' : 'Free');
+        } else {
+          await setDoc(userRef, { email: currentUser.email, isPro: false });
         }
       }
     });
     return () => unsubscribe();
   }, []);
 
-  // ESTA ES LA FUNCIÓN QUE EL MODAL DEBE LLAMAR PARA LOS CÓDIGOS
+  // GENERADOR DE PDF PROFESIONAL (No es una impresión de pantalla)
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text("Reporte de Peritaje Legal IA", 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Jurisdicción: ${result.jurisdiction}`, 20, 40);
+    doc.text(`Puntaje de Riesgo: ${result.score}/100`, 20, 50);
+    
+    let y = 70;
+    result.findings.forEach((f: any) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(`${f.title} (${f.level})`, 20, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(f.description, 20, y + 7, { maxWidth: 170 });
+      y += 25;
+    });
+
+    doc.save("Peritaje_Compliance_AI.pdf");
+  };
+
   const handleRedeemCode = async (code: string) => {
-    if (!user) return alert("Iniciá sesión primero");
-    try {
-      const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const couponDoc = querySnapshot.docs[0];
-        await updateDoc(doc(db, "coupons", couponDoc.id), { used: true, usedBy: user.uid });
-        await updateDoc(doc(db, "users", user.uid), { isPro: true });
-        setUserTier('Pro');
-        alert("¡Éxito! Ahora sos Pro.");
-        setIsPaymentOpen(false);
-      } else {
-        alert("Código inválido.");
-      }
-    } catch (e) { alert("Error al validar."); }
+    if (!user) return alert("Iniciá sesión");
+    const q = query(collection(db, "coupons"), where("code", "==", code.trim().toUpperCase()), where("used", "==", false));
+    const snap = await getDocs(q);
+    
+    if (!snap.empty) {
+      const coupon = snap.docs[0];
+      await updateDoc(doc(db, "coupons", coupon.id), { used: true, usedBy: user.uid });
+      await updateDoc(doc(db, "users", user.uid), { isPro: true });
+      setUserTier('Pro');
+      alert("¡Cuenta Pro activada!");
+      setIsPaymentOpen(false);
+    } else {
+      alert("Código inválido.");
+    }
+  };
+
+  const handleAudit = async (source: string | File) => {
+    setIsAuditing(true);
+    setTimeout(() => {
+      setResult({
+        score: 25,
+        jurisdiction: "Mendoza, Argentina / Internacional",
+        findings: [
+          { id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Extracción masiva de datos faciales detectada.' },
+          { id: 2, level: 'critical', title: 'Monitoreo de Dispositivo', description: 'Acceso a metadatos privados del sistema.' },
+          { id: 3, level: 'warning', title: 'Jurisdicción Extranjera', description: 'Cláusulas de arbitraje fuera del país.' }
+        ]
+      });
+      setIsAuditing(false);
+    }, 2000);
   };
 
   return (
@@ -62,13 +99,7 @@ function App() {
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 xl:col-span-4">
             <Hero />
-            <AuditTool onAudit={(s) => {
-              setIsAuditing(true);
-              setTimeout(() => {
-                setResult({ score: 25, findings: [{id:1, level:'critical', title:'Biometría', description:'Extracción facial detected.'}] });
-                setIsAuditing(false);
-              }, 2000);
-            }} isAuditing={isAuditing} />
+            <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
           </div>
 
           <div className="col-span-12 xl:col-span-8">
@@ -76,7 +107,8 @@ function App() {
               <ResultsOverview 
                 result={result} 
                 userTier={userTier} 
-                onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} 
+                // Si es Pro, baja el PDF real. Si no, abre pagos.
+                onExport={() => userTier === 'Pro' ? downloadPDF() : setIsPaymentOpen(true)} 
               />
             )}
           </div>
@@ -86,7 +118,7 @@ function App() {
       <PaymentModal 
         isOpen={isPaymentOpen} 
         onClose={() => setIsPaymentOpen(false)} 
-        onRedeemCode={handleRedeemCode} // IMPORTANTE: Pasamos la función al modal
+        onRedeemCode={handleRedeemCode}
       />
     </div>
   );
