@@ -4,12 +4,12 @@ import { cn } from '../../lib/utils';
 const useTranslation = () => ({ 
   t: (key: string) => {
     const texts: any = {
-      'audit.title': 'Comenzar Peritaje',
-      'audit.placeholder': 'Pegá la URL de los términos y condiciones...',
-      'audit.button': 'Analizar Ahora',
-      'audit.helper': 'Formatos soportados: URL, PDF, TXT',
-      'dropzone.title': 'Arrastrá tus archivos aquí',
-      'dropzone.sub': 'o hacé clic para buscar'
+      'auditTitle': 'Comenzar Peritaje',
+      'dropZone': 'Arrastrá tus archivos aquí',
+      'clickToBrowse': 'o hacé clic para buscar',
+      'URLLABEL': 'URL de referencia',
+      'RUNAUDIT': 'EJECUTAR AUDITORÍA',
+      'inputPlaceholder': 'https://api.openai.com/v1/...'
     };
     return texts[key] || key;
   }
