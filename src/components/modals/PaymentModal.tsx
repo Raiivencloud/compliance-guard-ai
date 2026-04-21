@@ -6,7 +6,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: any) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-300">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl relative">
         <button onClick={onClose} className="absolute top-6 right-6 text-slate-400 hover:text-slate-600">
           <X size={24} />
         </button>
@@ -23,7 +23,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: any) {
               PAGAR CON MERCADO PAGO
             </a>
 
-            {/* AQUÍ SE CARGARÁ PAYPAL AUTOMÁTICAMENTE */}
+            {/* Contenedor para PayPal */}
             <div id="paypal-button-container" className="min-h-[50px]"></div>
 
             <button onClick={() => window.open('https://wa.me/5492615000872', '_blank')} className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold flex items-center justify-center gap-3">
