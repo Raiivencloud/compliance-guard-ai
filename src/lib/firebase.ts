@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  // Esta es la "Clave de API 2" que creamos hoy
+  // Esta es la llave que termina en fo8M que creamos hoy
   apiKey: "AIzaSyD4DFwYz_i_pHq01JKXeW__J_Bj4p7fo8M", 
   authDomain: "compliance-guard-ai.firebaseapp.com",
   projectId: "compliance-guard-ai",
