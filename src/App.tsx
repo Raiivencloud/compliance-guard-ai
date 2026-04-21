@@ -9,7 +9,6 @@ import AuditTool from './components/landing/AuditTool';
 import ResultsOverview from './components/dashboard/ResultsOverview';
 import PaymentModal from './components/modals/PaymentModal';
 
-// Definimos el tipo para evitar errores de compilación
 type UserTier = 'Free' | 'Pro';
 
 function App() {
@@ -26,111 +25,100 @@ function App() {
       if (currentUser) {
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
-        
         if (userSnap.exists()) {
-          const status = userSnap.data().isPro ? 'Pro' : 'Free';
-          setUserTier(status as UserTier);
+          setUserTier(userSnap.data().isPro ? 'Pro' : 'Free');
         } else {
-          await setDoc(userRef, { 
-            email: currentUser.email, 
-            isPro: false,
-            createdAt: new Date()
-          });
-          setUserTier('Free');
+          await setDoc(userRef, { email: currentUser.email, isPro: false });
         }
       }
     });
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = async () => {
-    if (user) {
-      await signOut(auth);
-      setUserTier('Free');
-      alert("Sesión cerrada correctamente.");
-    } else {
-      try {
-        await signInWithPopup(auth, googleProvider);
-      } catch (err) {
-        console.error("Error en login:", err);
+  // --- FUNCIÓN SECRETA PARA GENERAR 100 LLAVES ---
+  const generarStockVip = async () => {
+    if (!confirm("¿Generar 100 llaves nuevas en Firebase?")) return;
+    const { collection, addDoc } = await import('firebase/firestore');
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const segment = () => Array.from({length: 4}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    
+    try {
+      const nuevasLlaves: string[] = [];
+      for (let i = 0; i < 100; i++) {
+        const llave = `${segment()}-${segment()}-${segment()}`;
+        await setDoc(doc(db, "coupons", llave), { used: false, createdAt: new Date() });
+        nuevasLlaves.push(llave);
       }
-    }
+      console.log("📋 TUS 100 LLAVES:\n" + nuevasLlaves.join("\n"));
+      alert("✅ ¡Hecho! Revisá la consola (F12) para copiar la lista.");
+    } catch (e) { alert("Error: " + e); }
+  };
+
+  const handleLogin = async () => {
+    if (user) { await signOut(auth); setUserTier('Free'); }
+    else { try { await signInWithPopup(auth, googleProvider); } catch (err) { console.error(err); } }
   };
 
   const handlePaymentSuccess = async () => {
-    if (!user) return alert("Primero debés iniciar sesión con Google.");
-    
-    const code = prompt("Ingresá el código de activación:");
-    if (code?.toUpperCase() === 'RAIIVEN') {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { isPro: true });
-      setUserTier('Pro');
-      setIsPaymentOpen(false);
-      alert("¡Cuenta Pro activada permanentemente en tu Gmail!");
-    } else if (code !== null) {
-      alert("Código incorrecto.");
-    }
+    if (!user) return alert("Logueate primero.");
+    const input = prompt("Ingresá tu llave (XXXX-XXXX-XXXX):");
+    if (!input) return;
+    const code = input.trim().toUpperCase();
+
+    try {
+      const couponRef = doc(db, "coupons", code);
+      const couponSnap = await getDoc(couponRef);
+      if (couponSnap.exists() && !couponSnap.data().used) {
+        await updateDoc(doc(db, "users", user.uid), { isPro: true });
+        await updateDoc(couponRef, { used: true, usedBy: user.email, date: new Date() });
+        setUserTier('Pro');
+        setIsPaymentOpen(false);
+        alert("¡Cuenta Pro Activada!");
+      } else { alert("Llave inválida o ya usada."); }
+    } catch (e) { alert("Error de conexión."); }
   };
 
   const handleAudit = async (source: string | File) => {
     setIsAuditing(true);
-    setResult(null);
     setTimeout(() => {
       setResult({
         score: 64,
-        findings: [
-          { id: 1, level: 'critical', color: 'red', title: 'Privacidad Biométrica', description: 'TikTok recolecta huellas faciales y de voz sin consentimiento explícito.' },
-          { id: 2, level: 'critical', color: 'red', title: 'Jurisdicción Internacional', description: 'Transferencia de datos a servidores fuera de Argentina.' }
-        ],
-        summary: "Peritaje finalizado. Se detectaron riesgos legales críticos.",
-        jurisdiction: "MENDOZA / ARGENTINA",
-        details: { complexity: "Alta", timestamp: new Date().toLocaleString('es-AR') }
+        findings: [{ id: 1, level: 'critical', title: 'Privacidad Biométrica', description: 'Recolección de datos sin aviso.' }],
+        summary: "Análisis completado.",
+        jurisdiction: "MENDOZA / ARGENTINA"
       });
       setIsAuditing(false);
-    }, 2500);
+    }, 2000);
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header 
-        onViewChange={setActiveView} 
-        isLoggedIn={!!user} 
-        onLogin={handleLogin} 
-        userPhoto={user?.photoURL} 
-      />
-      
+      <Header onViewChange={setActiveView} isLoggedIn={!!user} onLogin={handleLogin} userPhoto={user?.photoURL} />
       <main className="max-w-7xl mx-auto pt-32 pb-20 px-4">
-        {activeView === 'audit' && (
-          <div className="grid grid-cols-12 gap-8">
-            <div className="col-span-12 xl:col-span-4 space-y-8">
-              <Hero />
-              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-xl shadow-blue-900/5">
-                <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
-              </div>
-            </div>
-            <div className="col-span-12 xl:col-span-8">
-              {!isAuditing && result ? (
-                <ResultsOverview 
-                  result={result} 
-                  onReset={() => setResult(null)} 
-                  userTier={userTier} 
-                  onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} 
-                />
-              ) : (
-                <div className="h-[500px] flex items-center justify-center bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 text-slate-400 font-medium italic">
-                  {isAuditing ? "Analizando política legal..." : "Subí un documento para empezar el peritaje"}
-                </div>
-              )}
+        <div className="grid grid-cols-12 gap-8">
+          <div className="col-span-12 xl:col-span-4">
+            <Hero />
+            <div className="bg-white rounded-[2.5rem] p-8 border mt-8 shadow-xl">
+              <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
             </div>
           </div>
-        )}
+          <div className="col-span-12 xl:col-span-8">
+            {!isAuditing && result ? (
+              <ResultsOverview result={result} onReset={() => setResult(null)} userTier={userTier} onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)} />
+            ) : (
+              <div className="h-[500px] flex items-center justify-center border-2 border-dashed rounded-[2.5rem] text-slate-400">
+                {isAuditing ? "Analizando..." : "Subí un archivo para empezar"}
+              </div>
+            )}
+          </div>
+        </div>
       </main>
-
-      <PaymentModal 
-        isOpen={isPaymentOpen} 
-        onClose={() => setIsPaymentOpen(false)} 
-        onSuccess={handlePaymentSuccess} 
-      />
+      <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} onSuccess={handlePaymentSuccess} />
+      
+      {/* BOTÓN SECRETO ABAJO A LA DERECHA */}
+      <button onClick={generarStockVip} className="fixed bottom-2 right-2 opacity-0 hover:opacity-100 text-[10px] text-slate-400">
+        ADMIN_GEN
+      </button>
     </div>
   );
 }
