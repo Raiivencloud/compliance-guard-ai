@@ -3,11 +3,11 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  // Esta es la llave que termina en fo8M que creamos hoy
-  apiKey: "AIzaSyD4DFwYz_i_pHq01JKXeW__J_Bj4p7fo8M", 
-  authDomain: "compliance-guard-ai.firebaseapp.com",
-  projectId: "compliance-guard-ai",
-  storageBucket: "compliance-guard-ai.appspot.com",
+  // LLAVE ORIGINAL DEL PROYECTO (Imagen bd8545)
+  apiKey: "AIzaSyBf-9iAvQFTGnzjbODSDF-VQfyceAl8IC8",
+  authDomain: "complianceguardai.firebaseapp.com",
+  projectId: "complianceguardai",
+  storageBucket: "complianceguardai.firebasestorage.app",
   messagingSenderId: "12567186833",
   appId: "1:12567186833:web:468a381acf94ac34a5e30"
 };
