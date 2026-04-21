@@ -2,9 +2,9 @@ import { motion } from 'framer-motion';
 const useTranslation = () => ({ 
   t: (key: string) => {
     const texts: any = {
-      'hero.title': 'Auditoría Legal de IA en Segundos',
-      'hero.subtitle': 'Analizá términos y condiciones con nuestra IA experta. Detectá riesgos críticos y asegurá el cumplimiento normativo en TikTok y más.',
-      'hero.badge': 'Nueva Era de Cumplimiento'
+      'heroTitle': 'Auditoría Legal de IA en Segundos',
+      'heroSub': 'Analizá términos y condiciones con nuestra IA experta. Detectá riesgos críticos y asegurá el cumplimiento normativo en TikTok y más.',
+      'heroBadge': 'Nueva Era de Cumplimiento'
     };
     return texts[key] || key;
   }
