@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Download, RefreshCw, ShieldCheck, Shield } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import FindingCard from './FindingCard';
-import { useTranslation } from '../../hooks/useTranslation';
+const useTranslation = () => ({ t: (key: string) => key });
 import type { AuditResult } from '../../types';
 
 interface ResultsOverviewProps {
