@@ -3,12 +3,11 @@ import { useState } from 'react';
 const useTranslation = () => ({ 
   t: (key: string) => {
     const texts: any = {
-      'nav.audit': 'Auditoría',
-      'nav.history': 'Historial',
-      'nav.pricing': 'Precios',
-      'nav.login': 'Iniciar Sesión',
-      'nav.logout': 'Cerrar Sesión',
-      'user.pro': 'Plan Pro'
+      'navAudit': 'Auditoría',
+      'navHistory': 'Historial',
+      'navSettings': 'Configuración',
+      'navPricing': 'Precios',
+      'navLogin': 'Iniciar Sesión'
     };
     return texts[key] || key;
   }
