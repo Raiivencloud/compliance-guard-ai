@@ -26,14 +26,19 @@ function App() {
   const handleLogin = () => {
     setIsLoggedIn(true);
     localStorage.setItem('user_session', 'true');
-    alert('Sesión iniciada con éxito');
+    alert('Sesión iniciada correctamente.');
   };
 
   const handlePaymentSuccess = () => {
-    setUserTier('Pro');
-    setIsPaymentOpen(false);
-    localStorage.setItem('audit_premium', 'true');
-    alert('¡Modo Pro activado! Ya podés descargar tus reportes.');
+    const code = prompt("Ingresá el código de activación que recibiste por WhatsApp:");
+    if (code?.toUpperCase() === 'RAIIVEN') {
+      setUserTier('Pro');
+      localStorage.setItem('audit_premium', 'true');
+      setIsPaymentOpen(false);
+      alert('¡Acceso PRO activado exitosamente!');
+    } else if (code !== null) {
+      alert('Código incorrecto. Por favor, verificá con soporte.');
+    }
   };
 
   const handleAudit = async (source: string | File) => {
@@ -58,15 +63,6 @@ function App() {
     }, 2500);
   };
 
-  const handleExport = () => {
-    if (userTier === 'Pro') {
-      alert('Generando PDF Premium... La descarga comenzará en instantes.');
-      window.print(); // Solución rápida para generar PDF
-    } else {
-      setIsPaymentOpen(true);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50">
       <Header onViewChange={setActiveView} isLoggedIn={isLoggedIn} onLogin={handleLogin} />
@@ -85,16 +81,16 @@ function App() {
                   result={result} 
                   onReset={() => setResult(null)} 
                   userTier={userTier} 
-                  onExport={handleExport}
+                  onExport={() => userTier === 'Pro' ? window.print() : setIsPaymentOpen(true)}
                 />
               ) : isAuditing ? (
                 <div className="h-[500px] flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-dashed border-slate-300">
                   <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-                  <p className="text-slate-500 font-bold animate-pulse">Analizando política legal...</p>
+                  <p className="text-slate-500 font-bold animate-pulse">Analizando...</p>
                 </div>
               ) : (
-                <div className="h-[500px] flex items-center justify-center bg-white/50 rounded-[2.5rem] border border-dashed border-slate-200 text-slate-400 font-medium italic">
-                   Esperando documento para iniciar peritaje...
+                <div className="h-[500px] flex items-center justify-center bg-white/50 rounded-[2.5rem] border border-dashed border-slate-200 text-slate-400">
+                   Esperando documento...
                 </div>
               )}
             </div>
