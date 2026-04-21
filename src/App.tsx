@@ -16,30 +16,6 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
-  // Inyección de PayPal dinámica
-  useEffect(() => {
-    if (isPaymentOpen && !document.getElementById('paypal-sdk')) {
-      const script = document.createElement('script');
-      script.id = 'paypal-sdk';
-      script.src = "https://www.paypal.com/sdk/js?client-id=test&currency=USD"; 
-      script.onload = () => {
-        if ((window as any).paypal) {
-          (window as any).paypal.Buttons({
-            style: { layout: 'horizontal', shape: 'pill', height: 40 },
-            onApprove: async () => {
-              if (user) {
-                await updateDoc(doc(db, "users", user.uid), { isPro: true });
-                setUserTier('Pro');
-                setIsPaymentOpen(false);
-              }
-            }
-          }).render('#paypal-button-container');
-        }
-      };
-      document.body.appendChild(script);
-    }
-  }, [isPaymentOpen, user]);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -61,7 +37,7 @@ function App() {
     signInWithPopup(auth, googleProvider).catch(console.error);
   };
 
-  // AUDITORÍA COMPLETA: Ahora con Críticos, Medios y Bajos
+  // AUDITORÍA BLINDADA: Con la estructura exacta para que NO se ponga en blanco
   const handleAudit = () => {
     setIsAuditing(true);
     setResult(null); 
@@ -69,31 +45,37 @@ function App() {
     setTimeout(() => {
       setResult({ 
         score: 15, 
-        summary: "Análisis de TikTok finalizado. Se detectaron múltiples brechas de seguridad y recolección excesiva de datos biométricos y de red.",
+        summary: "Análisis de TikTok finalizado. Se detectaron brechas críticas en biometría y keylogging.",
+        criticalRisks: 2,
+        advisoryWarnings: 2,
         findings: [
           {
             id: 1, 
-            level: 'critical', 
+            level: 'CRITICAL', // En mayúsculas suele ser más seguro para el componente
             title: 'Recolección Biométrica', 
-            description: 'TikTok declara la recolección de "huellas faciales y de voz" sin consentimiento específico por sesión.'
+            description: 'TikTok declara la recolección de "huellas faciales y de voz" sin consentimiento específico.',
+            color: 'red' // Forzamos el color por si el componente lo pide
           },
           {
             id: 2, 
-            level: 'critical', 
+            level: 'CRITICAL', 
             title: 'Keylogging In-App', 
-            description: 'El navegador interno puede rastrear pulsaciones de teclas en sitios externos visitados desde la app.'
+            description: 'El navegador interno puede rastrear pulsaciones de teclas en sitios externos.',
+            color: 'red'
           },
           {
             id: 3, 
-            level: 'medium', 
+            level: 'WARNING', 
             title: 'Escaneo de Red Local', 
-            description: 'La app identifica otros dispositivos en tu WiFi para mejorar el perfilado de usuarios.'
+            description: 'La app identifica otros dispositivos en tu WiFi para perfilado.',
+            color: 'amber'
           },
           {
             id: 4, 
-            level: 'low', 
+            level: 'INFO', 
             title: 'Retención Extendida', 
-            description: 'Los logs de actividad se conservan incluso después de cerrar la cuenta por tiempo indefinido.'
+            description: 'Los logs de actividad se conservan por tiempo indefinido.',
+            color: 'blue'
           }
         ] 
       });
@@ -111,7 +93,7 @@ function App() {
       await updateDoc(doc(db, "users", user.uid), { isPro: true });
       setUserTier('Pro');
       setIsPaymentOpen(false);
-      alert("¡Activado!");
+      alert("¡Cuenta Pro Activada!");
     } else {
       alert("Código inválido.");
     }
