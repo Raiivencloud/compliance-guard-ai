@@ -33,7 +33,7 @@ Reglas críticas:
 5. Validación: Si el texto no es una política legítima, devuelve: {"error": "Documento no válido."}
 6. Criterio: Sé pesimista; ante la duda, prioridad crítica.`;
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
   const PRIMARY_MODEL = "gemini-3-flash-preview";
