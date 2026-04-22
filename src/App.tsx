@@ -106,49 +106,45 @@ function MainApp() {
     return () => clearInterval(interval);
   }, [isAuditing]);
 
-  const handleAudit = async (source: string | File) => {
-    if (!user) {
-      setError("Inicia sesión para realizar peritajes.");
-      return;
-    }
+ const handleAudit = async (source: string | File) => {
+  if (!user) {
+    setError("Inicia sesión para continuar.");
+    return;
+  }
 
-    setIsAuditing(true);
+  setIsAuditing(true);
+  setResult(null);
+  setError(null);
+
+  try {
+    const auditResult = await runAudit(source);
+    
+    // Mostramos el resultado primero para que el usuario lo vea
+    setResult(auditResult);
+
+    // Guardamos en Firestore de forma "limpia"
+    const auditToSave = {
+      score: auditResult.score,
+      summary: auditResult.summary,
+      criticalRisks: auditResult.criticalRisks,
+      advisoryWarnings: auditResult.advisoryWarnings,
+      findings: auditResult.findings,
+      userId: user.uid,
+      timestamp: new Date().toISOString(),
+      sourceName: typeof source === 'string' ? 'URL' : source.name
+    };
+
+    await addDoc(collection(db, 'audits'), auditToSave);
+    setHistory(prev => [auditResult, ...prev]);
+
+  } catch (err: any) {
+    console.error("Error crítico:", err);
+    setError("Error en el análisis. Verificá tu conexión.");
     setResult(null);
-    setError(null);
-    setActiveView('audit');
-
-    try {
-      const auditResult = await runAudit(source);
-      
-      // Validamos que el resultado tenga findings antes de mostrarlo
-      if (auditResult && Array.isArray(auditResult.findings)) {
-        setResult(auditResult);
-
-        // Persistimos en Firestore (solo si la IA devolvió datos válidos)
-        const auditData = {
-          ...auditResult,
-          userId: user.uid,
-          timestamp: new Date().toISOString()
-        };
-
-        const cleanAuditData = Object.fromEntries(
-          Object.entries(auditData).filter(([_, v]) => v !== undefined)
-        );
-
-        await addDoc(collection(db, 'audits'), cleanAuditData);
-        setHistory(prev => [auditData as AuditResult, ...prev]);
-      } else {
-        throw new Error("El motor de IA devolvió un formato incompleto. Reintentá.");
-      }
-    } catch (err: any) {
-      console.error("Error en el protocolo de auditoría:", err);
-      // Mostramos el error en el UI en lugar de dejar la pantalla blanca
-      setError(err.message || 'Error en el protocolo de auditoría. Reintentá.');
-      setResult(null); 
-    } finally {
-      setIsAuditing(false);
-    }
-  };
+  } finally {
+    setIsAuditing(false);
+  }
+};
 
   const handleLogin = async () => {
     try {
