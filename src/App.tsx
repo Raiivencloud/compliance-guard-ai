@@ -194,134 +194,71 @@ function MainApp() {
         onLogout={handleLogout}
         user={user}
       />
-      
-      <main className="flex-1 grid grid-cols-12 gap-8 p-8 overflow-hidden mt-16 max-w-[1600px] mx-auto w-full">
-        <div className="col-span-12 xl:col-span-4 flex flex-col gap-8 no-print">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key="audit-interaction"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-8"
-            >
-              <Hero />
-              <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50 transition-opacity group-hover:opacity-100" />
-                <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
-              </div>
-              
-              <div 
-                className="bg-slate-900 rounded-3xl p-8 text-white flex justify-between items-center shadow-2xl group hover:bg-slate-800 transition-all cursor-pointer relative overflow-hidden active:scale-[0.98]" 
-                onClick={() => setActiveView('history')}
-              >
-                <div className="relative z-10">
-                  <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest flex items-center gap-2 mb-2">
-                    <Globe size={12} /> Recent Scanning Status
-                  </p>
-                  <p className="text-xl font-black truncate max-w-[200px] tracking-tight">
-                    {history[0]?.url || history[0]?.fileName || 'No active scans'}
-                  </p>
-                  <p className="text-xs text-slate-400 font-medium mt-1">
-                    {history[0] ? new Date(history[0].timestamp).toLocaleTimeString() : 'Initialize protocol to start'}
-                  </p>
-                </div>
-                <div className="text-right relative z-10">
-                  <span className={`block text-[10px] font-black uppercase tracking-widest mb-1 ${history[0] ? 'text-emerald-400' : 'text-slate-500'}`}>
-                    {history[0] ? 'STATUS: NOMINAL' : 'STATUS: IDLE'}
-                  </span>
-                  <span className="text-3xl font-black">{history[0]?.score || '00'}<span className="text-sm opacity-50">%</span></span>
-                </div>
-                <div className="absolute bottom-0 right-0 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl -mr-12 -mb-12" />
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+  <main className="flex-1 grid grid-cols-12 gap-8 p-8 overflow-hidden mt-16 max-w-[1600px] mx-auto w-full">
+      {/* Columna Izquierda: Herramientas */}
+      <div className="col-span-12 xl:col-span-4 flex flex-col gap-8 no-print">
+        <div className="space-y-8">
+          <Hero />
+          <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50 transition-opacity group-hover:opacity-100" />
+            <AuditTool onAudit={handleAudit} isAuditing={isAuditing} />
+          </div>
 
-        <div className="col-span-12 xl:col-span-8 print:col-span-12">
-          <AnimatePresence mode="wait">
-            {activeView === 'audit' && (
-              <motion.div key="audit-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                {isAuditing ? (
-                  <div className="bg-white rounded-3xl border border-slate-200 h-full flex flex-col items-center justify-center p-12 text-center text-slate-900 shadow-sm">
-                    <div className="relative w-32 h-32 mb-12">
-                      <motion.div
-                        className="absolute inset-0 border-t-4 border-blue-600 rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      />
-                      <motion.div
-                        className="absolute inset-4 border-t-4 border-emerald-500 rounded-full"
-                        animate={{ rotate: -360 }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Shield size={48} className="text-blue-600 animate-pulse" />
-                      </div>
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">ComplianceGuard Engine</h2>
-                    <div className="space-y-2">
-                       <p className="text-slate-900 font-black text-sm uppercase tracking-widest">{statusMessage}</p>
-                       <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] animate-pulse">Mapping Data Protocols & Legal Anchors...</p>
-                    </div>
-                  </div>
-) : error ? (
-            <div className="bg-white rounded-3xl border border-red-200 h-full flex flex-col items-center justify-center p-12 text-center bg-red-50/10">
-              <div className="w-20 h-20 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-500 mb-8 shadow-sm">
-                <Shield size={36} />
-              </div>
-              <h3 className="text-xl font-black text-slate-900">Error de Auditoría</h3>
-              <p className="text-sm text-red-700 max-w-xs mt-3 font-medium leading-relaxed">{error}</p>
-              <button
-                onClick={() => setError(null)}
-                className="mt-10 px-8 py-3 bg-red-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
-              >
-                Regresar al Inicio
-              </button>
+          <div 
+            className="bg-slate-900 rounded-3xl p-8 text-white flex justify-between items-center shadow-2xl group hover:bg-slate-800 transition-all cursor-pointer relative overflow-hidden active:scale-[0.98]"
+            onClick={() => setActiveView('history')}
+          >
+            <div className="relative z-10">
+              <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest flex items-center gap-2 mb-2">
+                <Globe size={12} /> Recent Scanning Status
+              </p>
+              <p className="text-xl font-black truncate max-w-[200px] tracking-tight">
+                {history[0]?.summary || 'No active scans'}
+              </p>
             </div>
-          ) : (result && Array.isArray(result.findings) && result.findings.length > 0) ? (
-            <ResultsOverview 
-              result={result}
-              onReset={() => setResult(null)}
-              onExport={handleExport}
-              userTier={userTier}
-              isPaymentPending={isPaymentPending}
-            />
-          ) : isAuditing ? (
-            <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border border-slate-200">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-              <h3 className="text-xl font-black text-slate-900">Finalizando Peritaje...</h3>
-              <p className="text-sm text-slate-500 mt-2">Cruzando datos con normativas legales.</p>
+            <div className="text-right relative z-10">
+               <span className="text-3xl font-black">{history[0]?.score || '00'}<span className="text-sm opacity-50">%</span></span>
             </div>
-          ) : (
-            <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100 border-dashed bg-slate-50/30">
-              <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-8">
-                <Shield size={40} />
-              </div>
-              <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest mb-2">Central de Operaciones</h3>
-              <p className="text-sm text-slate-400 max-w-xs font-medium leading-relaxed">Inicia un escaneo para ver los resultados detallados y recomendaciones.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Columna Derecha: Resultados y Vistas */}
+      <div className="col-span-12 xl:col-span-8 print:col-span-12 h-full">
+        <div className="h-full">
+          {activeView === 'audit' && (
+            <div className="h-full">
+              {isAuditing ? (
+                <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border border-slate-200">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                  <h3 className="text-xl font-black text-slate-900">Analizando Documento...</h3>
+                  <p className="text-sm text-slate-500 mt-2">{statusMessage}</p>
+                </div>
+              ) : error ? (
+                <div className="bg-white rounded-3xl border border-red-200 h-full flex flex-col items-center justify-center p-12 text-center bg-red-50/10">
+                  <Shield size={36} className="text-red-500 mb-4" />
+                  <h3 className="text-xl font-black text-slate-900">Error de Auditoría</h3>
+                  <p className="text-sm text-red-700 mt-2">{error}</p>
+                  <button onClick={() => setError(null)} className="mt-6 px-6 py-2 bg-red-600 text-white rounded-xl text-xs font-bold">Reintentar</button>
+                </div>
+              ) : (result && Array.isArray(result.findings) && result.findings.length > 0) ? (
+                <ResultsOverview result={result} onReset={() => setResult(null)} onExport={handleExport} userTier={userTier} isPaymentPending={isPaymentPending} />
+              ) : (
+                <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100 border-dashed bg-slate-50/30">
+                  <Shield size={40} className="text-slate-300 mb-6" />
+                  <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest">Central de Operaciones</h3>
+                  <p className="text-sm text-slate-400 max-w-xs mt-2">Inicia un escaneo para ver los resultados detallados.</p>
+                </div>
+              )}
             </div>
           )}
 
-            {activeView === 'history' && (
-              <motion.div key="history-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                <HistoryView history={history} onSelectResult={handleSelectHistory} />
-              </motion.div>
-            )}
-
-            {activeView === 'policy' && (
-              <motion.div key="policy-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                <PolicyEngineView />
-              </motion.div>
-            )}
-
-            {activeView === 'integrations' && (
-              <motion.div key="integrations-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                <IntegrationsView />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {activeView === 'history' && <HistoryView history={history} onSelectResult={handleSelectHistory} />}
+          {activeView === 'policy' && <PolicyEngineView />}
+          {activeView === 'integrations' && <IntegrationsView />}
         </div>
-      </main>
+      </div>
+    </main>
 
       <footer className="bg-white px-10 py-10 border-t border-slate-200 no-print">
         <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
