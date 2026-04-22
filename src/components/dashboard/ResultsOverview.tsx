@@ -1,19 +1,8 @@
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Download, RefreshCw, ShieldCheck, Shield } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import FindingCard from './FindingCard';
-const useTranslation = () => ({ 
-  t: (key: string) => {
-    const texts: any = {
-      'results.score': 'Puntaje de Riesgo',
-      'results.critical': 'Hallazgos Críticos',
-      'results.summary': 'Resumen Ejecutivo',
-      'results.export': 'Exportar Informe',
-      'results.unlocked': 'Informe Completo Desbloqueado'
-    };
-    return texts[key] || key;
-  }
-});
+import { useTranslation } from '../../hooks/useTranslation';
 import type { AuditResult } from '../../types';
 
 interface ResultsOverviewProps {

@@ -1,14 +1,6 @@
-import { motion } from 'framer-motion';
-const useTranslation = () => ({ 
-  t: (key: string) => {
-    const texts: any = {
-      'heroTitle': 'Auditoría Legal de IA en Segundos',
-      'heroSub': 'Analizá términos y condiciones con nuestra IA experta. Detectá riesgos críticos y asegurá el cumplimiento normativo en TikTok y más.',
-      'heroBadge': 'Nueva Era de Cumplimiento'
-    };
-    return texts[key] || key;
-  }
-});
+import { motion } from 'motion/react';
+import { useTranslation } from '../../hooks/useTranslation';
+
 export default function Hero() {
   const { t } = useTranslation();
   

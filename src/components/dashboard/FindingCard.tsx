@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, ShieldCheck, AlertCircle, Shield, Lock } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import type { AuditFinding, RiskLevel } from '../../types';
 
 interface FindingCardProps {
@@ -71,7 +71,12 @@ export default function FindingCard({ finding, isBlurred, userTier }: FindingCar
       
       <div className={cn("flex-1", isBlurred && userTier === 'Free' && "blur-[5px]")}>
         <div className="flex justify-between items-start mb-3">
-          <h4 className="text-sm font-black text-slate-900 tracking-tight">{finding.title}</h4>
+          <div className="flex flex-col gap-1">
+            <h4 className="text-sm font-black text-slate-900 tracking-tight">{finding.title}</h4>
+            <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded border border-blue-100 self-start">
+              {finding.lawRef}
+            </span>
+          </div>
           <span className={cn(
             "text-[9px] font-black uppercase px-2 py-1 rounded-md tracking-widest",
             finding.level === 'critical' ? "bg-red-50 text-red-600 border border-red-100" : finding.level === 'warning' ? "bg-amber-50 text-amber-600 border border-amber-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"

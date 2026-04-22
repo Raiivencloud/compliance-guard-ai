@@ -1,21 +1,22 @@
 import { Settings, Check, Shield, Globe, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
-const useTranslation = () => ({ t: (key: string) => key, language: 'es', setLanguage: () => {} });
+import { useTranslation } from '../../hooks/useTranslation';
+
 interface PolicyEngineViewProps {
   isDark: boolean;
   onToggleTheme: () => void;
 }
 
 export default function PolicyEngineView() {
-  const [activeLaws, setActiveLaws] = useState(['GDPR', 'EU AI ACT']);
+  const [activeLaws, setActiveLaws] = useState(['GDPR', 'Ley 25.326', 'EU AI ACT']);
   const { language, setLanguage, t } = useTranslation();
   
   const laws = [
+    { id: 'Ley 25.326', name: 'Protección de Datos Personales (Arg)', region: 'Argentina / Latam' },
     { id: 'GDPR', name: 'General Data Protection Regulation', region: 'Europe' },
     { id: 'EU AI ACT', name: 'Artificial Intelligence Act', region: 'Europe' },
     { id: 'CCPA', name: 'California Consumer Privacy Act', region: 'North America' },
     { id: 'PIPEDA', name: 'Personal Info Protection Act', region: 'Canada' },
-    { id: 'LGPD', name: 'Lei Geral de Proteção de Dados', region: 'Brazil' },
   ];
 
   const toggleLaw = (id: string) => {

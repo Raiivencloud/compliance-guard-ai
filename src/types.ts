@@ -6,6 +6,8 @@ export interface AuditFinding {
   title: string;
   description: string;
   level: RiskLevel;
+  color: 'red' | 'amber' | 'blue';
+  lawRef: string;
   recommendation: string;
 }
 

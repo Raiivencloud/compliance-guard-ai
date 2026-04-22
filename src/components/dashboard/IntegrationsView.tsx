@@ -1,5 +1,5 @@
 import { Github, Slack, Code, ExternalLink, Zap } from 'lucide-react';
-const useTranslation = () => ({ t: (key: string) => key });
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function IntegrationsView() {
   const { t } = useTranslation();

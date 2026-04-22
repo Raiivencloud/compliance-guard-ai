@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "User profiles and subscription data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "isPro": { "type": "boolean" },
+        "tier": { "type": "string", "enum": ["Free", "Pro"] },
+        "credits": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "coupons": {
+      "title": "Coupon",
+      "description": "Validation codes for unlocking Pro features",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "isUsed": { "type": "boolean" },
+        "usedBy": { "type": "string" },
+        "type": { "type": "string", "enum": ["single", "pro"] }
+      },
+      "required": ["code"]
+    },
+    "audits": {
+      "title": "Audit",
+      "description": "Stored audit results for users",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "score": { "type": "number" },
+        "summary": { "type": "string" },
+        "findings": { "type": "array" },
+        "timestamp": { "type": "string" },
+        "fileName": { "type": "string" },
+        "url": { "type": "string" }
+      },
+      "required": ["userId", "score", "timestamp"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "users",
+      "description": "Specific user document"
+    },
+    "coupons": {
+      "schema": "coupons",
+      "description": "Collection of access codes"
+    },
+    "audits": {
+      "schema": "audits",
+      "description": "Collection of stored user audits"
+    }
+  }
+}
