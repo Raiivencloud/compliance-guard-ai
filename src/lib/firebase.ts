@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDexjYxSXGhvPkyb92lIL0fjsx2DBsnjfk",
@@ -16,7 +16,8 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Esto limpia el error 401 forzando a elegir cuenta siempre
+// Limpia el error 401 forzando selección de cuenta
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-export { signInWithPopup, signOut, collection, addDoc, query, where, getDocs, doc, getDoc, setDoc, onSnapshot };
+// EXPORTACIONES PARA TODO EL PROYECTO
+export { signInWithPopup, signOut, collection, addDoc, query, where, getDocs, doc, getDoc, setDoc, updateDoc, onSnapshot };
