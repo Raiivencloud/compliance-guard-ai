@@ -278,15 +278,23 @@ function MainApp() {
                       Regresar al Inicio
                     </button>
                   </div>
-                ) : result ? (
-                  <ResultsOverview 
-                    result={result} 
-                    onReset={() => setResult(null)} 
-                    onExport={handleExport}
-                    userTier={userTier}
-                    isPaymentPending={isPaymentPending}
-                  />
-                ) : (
+               ) : (result && result.findings && Array.isArray(result.findings)) ? (
+  <ResultsOverview 
+    result={result}
+    onReset={() => setResult(null)}
+    onExport={handleExport}
+    userTier={userTier}
+    isPaymentPending={isPaymentPending}
+  />
+) : result ? (
+  <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+    <h3 className="text-xl font-black text-slate-900">Finalizando Peritaje...</h3>
+    <p className="text-sm text-slate-500 max-w-xs mt-2">Estamos organizando los hallazgos legales. Un momento.</p>
+  </div>
+) : (
+  <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100 border-dashed bg-slate-50/30">
+    {/* ... resto de tu código de Central de Operaciones (líneas 291 en adelante) ... */}
                   <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100 border-dashed bg-slate-50/30">
                     <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-8">
                       <Shield size={40} />
