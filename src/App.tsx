@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion ... } from 'framer-motion';
 import { Shield, Lock, Globe, CheckCircle2, MessageCircle, Info } from 'lucide-react';
 import Header from './components/common/Header';
 import Hero from './components/landing/Hero';
