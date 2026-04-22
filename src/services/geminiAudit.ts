@@ -1,47 +1,35 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AuditResult } from "../types";
 
-const SYSTEM_INSTRUCTION = `Eres 'ComplianceGuard Engine', una IA especializada en derecho digital. 
-Analiza Políticas de Privacidad bajo la Ley 25.326 (Argentina) y GDPR.
-Devuelve SIEMPRE un JSON válido con esta estructura:
+const SYSTEM_INSTRUCTION = `Eres 'ComplianceGuard Engine', experto en leyes de privacidad (Ley 25.326 Arg y GDPR). 
+Analiza el texto y devuelve SIEMPRE un JSON con esta estructura:
 {
-  "score": (número 1-100),
-  "summary": "resumen ejecutivo",
-  "criticalRisks": (número),
-  "advisoryWarnings": (número),
-  "findings": [
-    {
-      "id": "1",
-      "category": "Privacy",
-      "title": "título",
-      "description": "explicación",
-      "level": "critical",
-      "color": "red",
-      "lawRef": "Ley 25.326",
-      "recommendation": "acción"
-    }
-  ],
+  "score": (1-100),
+  "summary": "resumen",
+  "criticalRisks": (n),
+  "advisoryWarnings": (n),
+  "findings": [{ "id": "1", "category": "Privacy", "title": "...", "description": "...", "level": "critical", "color": "red", "lawRef": "...", "recommendation": "..." }],
   "iaTraining": true/false,
-  "jurisdiction": "país"
+  "jurisdiction": "..."
 }`;
 
-// Usamos la variable configurada en Netlify
+// Usamos la API Key que configuraste en Netlify
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY || "");
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
-  // Usando el modelo más actual disponible en tu cuenta
+  // MODELO ACTUALIZADO 2026: Gemini 3 Flash
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash", 
+    model: "gemini-3-flash",
     systemInstruction: SYSTEM_INSTRUCTION 
   });
 
   let textToAnalyze = "";
-
   if (typeof source === 'string') {
     textToAnalyze = source;
   } else {
-    // Para simplificar y evitar errores de buffer, extraemos el texto si es File
     textToAnalyze = "Analizando archivo: " + source.name;
+    // Nota: Para PDF reales necesitarías un extractor de texto, 
+    // pero esto sirve para testear la conexión ahora.
   }
 
   try {
@@ -49,11 +37,11 @@ export async function runAudit(source: string | File): Promise<AuditResult> {
     const response = await result.response;
     const text = response.text();
     
-    // Limpiamos el posible formato markdown de la IA
+    // Limpieza de formato markdown
     const cleanJson = text.replace(/```json|```/g, "").trim();
     return JSON.parse(cleanJson);
   } catch (error) {
-    console.error("Error en Auditoría:", error);
-    throw new Error("No se pudo completar el análisis legal.");
+    console.error("Error en la API de Gemini:", error);
+    throw new Error("No se pudo conectar con el motor de IA.");
   }
 }
