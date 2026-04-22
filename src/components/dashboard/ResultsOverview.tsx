@@ -174,18 +174,23 @@ export default function ResultsOverview({ result, onReset, onExport, userTier, i
             <span className="text-[10px] font-black uppercase text-slate-500 bg-slate-100 px-2 py-1 rounded-md">{result.findings.length} Hallazgos</span>
           </div>
           <div className="space-y-4">
-   {result.findings?.map((finding, index) => (
-              <div key={finding.id || `f-${index}`} className="animate-in slide-in-from-bottom-2 duration-300 fill-mode-both">
+   {result.findings?.map((f, i) => {
+            if (!f) return null;
+            const safeFinding = {
+              ...f,
+              color: (f as any).color || (f.level === 'critical' ? 'red' : 'blue'),
+              id: f.id || `audit-${i}`
+            };
+            return (
+              <div key={safeFinding.id} className="animate-in slide-in-from-bottom-2 duration-300 fill-mode-both">
                 <FindingCard 
-                  finding={{
-                    ...finding,
-                    color: finding.color || 'blue'
-                  }}
-                  isBlurred={userTier === 'Free' ? index > 0 : false}
+                  finding={safeFinding}
+                  isBlurred={userTier === 'Free' ? i > 0 : false}
                   userTier={userTier}
                 />
               </div>
-            ))}
+            );
+          })}
           </div>
         </div>
       </div>
