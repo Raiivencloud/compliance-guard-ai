@@ -178,10 +178,22 @@ function MainApp() {
     }
   };
 
-  const handleSelectHistory = (selected: AuditResult) => {
-    setResult(selected);
-    setActiveView('audit');
+const handleSelectHistory = (selected: any) => {
+  // BLINDAJE PARA EL HISTORIAL:
+  // Reconstruimos el objeto para que React no encuentre campos vacíos
+  const sanitized = {
+    ...selected,
+    findings: (selected.findings || []).map((f: any, i: number) => ({
+      ...f,
+      id: f.id || `h-${i}`,
+      color: f.color || (f.level === 'critical' ? 'red' : 'yellow')
+    }))
   };
+
+  setResult(sanitized);
+  setError(null);
+  setActiveView('audit');
+};
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-blue-100 transition-colors duration-300">
