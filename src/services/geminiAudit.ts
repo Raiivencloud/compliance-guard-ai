@@ -2,45 +2,35 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AuditResult } from "../types";
 
 const SYSTEM_INSTRUCTION = `Actúa como 'ComplianceGuard Engine'. 
-Analiza el texto legal y genera UNICAMENTE un objeto JSON con:
-score (1-100), summary (string), criticalRisks (number), advisoryWarnings (number), 
-findings (array de objetos con id, category, title, description, level, color, lawRef, recommendation),
-iaTraining (boolean) y jurisdiction (string).`;
+Analiza el texto legal y genera UNICAMENTE un objeto JSON.
+IMPORTANTE: Cada objeto en el array 'findings' DEBE incluir obligatoriamente el campo 'color' siendo este "red", "yellow" o "blue" según la gravedad.`;
 
-// Usamos la API KEY de Google AI Studio (la que empieza con AIza...)
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY || "");
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
   try {
-    // MODELO ESPECIFICO: gemini-3-flash-preview
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-3-flash-preview" 
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+    let textToAnalyze = typeof source === 'string' ? source : "Analizando archivo: " + source.name;
 
-    let textToAnalyze = "";
-    if (typeof source === 'string') {
-      textToAnalyze = source;
-    } else {
-      // Nota: Si mandas archivos, asegúrate de extraer el texto antes 
-      // o usar la capacidad multimodal del modelo.
-      textToAnalyze = "Analizando contenido de: " + source.name;
-    }
-
-    const prompt = `${SYSTEM_INSTRUCTION}\n\nTexto a procesar:\n${textToAnalyze}`;
-
+    const prompt = `${SYSTEM_INSTRUCTION}\n\nTexto:\n${textToAnalyze}`;
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
     
-    // Limpieza de bloques de código markdown
     const cleanJson = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(cleanJson);
+    const parsed: AuditResult = JSON.parse(cleanJson);
 
-  } catch (error: any) {
-    console.error("Error en Gemini 3 Preview:", error);
-    
-    // Si el modelo preview falla o no está disponible, el sistema 
-    // debería intentar con el modelo pro si así lo configuraste.
-    throw new Error("El motor de IA (Gemini 3 Flash Preview) no respondió. Revisa tu cuota en AI Studio.");
+    // BLINDAJE: Si la IA no mandó colores, se los asignamos nosotros para que no explote la web
+    if (parsed.findings) {
+      parsed.findings = parsed.findings.map(f => ({
+        ...f,
+        color: f.color || (f.level === 'critical' ? 'red' : f.level === 'warning' ? 'yellow' : 'blue')
+      }));
+    }
+
+    return parsed;
+  } catch (error) {
+    console.error("Error en auditoría:", error);
+    throw new Error("Error al procesar los datos de la IA.");
   }
 }
