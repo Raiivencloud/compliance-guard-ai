@@ -1,9 +1,8 @@
 {
   "projectId": "compliance-guard-ai",
-  "appId": "1:564812860703:web:0de735eedae0ef10c6b42a",
-  "apiKey": "AIzaSyDexjYxSXGhvPkyb92lIL0fjsx2DBsnjfk",
+  "appId": "1:564812860703:web:2ca774d30e6f8323c6b42a",
+  "apiKey": "AIzaSyDexJyXSXGhvPkyb921IL0fjsx2DBsnjfk",
   "authDomain": "compliance-guard-ai.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-70772350-814d-4a8f-9be0-0059587d7d56",
   "storageBucket": "compliance-guard-ai.firebasestorage.app",
   "messagingSenderId": "564812860703",
   "measurementId": ""
