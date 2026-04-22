@@ -264,47 +264,43 @@ function MainApp() {
                        <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] animate-pulse">Mapping Data Protocols & Legal Anchors...</p>
                     </div>
                   </div>
-                ) : error ? (
-                  <div className="bg-white rounded-3xl border border-red-200 h-full flex flex-col items-center justify-center p-12 text-center bg-red-50/10">
-                    <div className="w-20 h-20 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-500 mb-8 shadow-sm">
-                      <Shield size={36} />
-                    </div>
-                    <h3 className="text-xl font-black text-red-900">Error de Auditoría</h3>
-                    <p className="text-sm text-red-700 max-w-xs mt-3 font-medium leading-relaxed">{error}</p>
-                    <button 
-                      onClick={() => setError(null)}
-                      className="mt-10 px-8 py-3 bg-red-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
-                    >
-                      Regresar al Inicio
-                    </button>
-                  </div>
-               ) : (result && result.findings && Array.isArray(result.findings)) ? (
-  <ResultsOverview 
-    result={result}
-    onReset={() => setResult(null)}
-    onExport={handleExport}
-    userTier={userTier}
-    isPaymentPending={isPaymentPending}
-  />
-) : result ? (
-  <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-    <h3 className="text-xl font-black text-slate-900">Finalizando Peritaje...</h3>
-    <p className="text-sm text-slate-500 max-w-xs mt-2">Estamos organizando los hallazgos legales. Un momento.</p>
-  </div>
-) : (
-  <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100 border-dashed bg-slate-50/30">
-    {/* ... resto de tu código de Central de Operaciones (líneas 291 en adelante) ... */}
-                  <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100 border-dashed bg-slate-50/30">
-                    <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-8">
-                      <Shield size={40} />
-                    </div>
-                    <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest mb-2">Central de Operaciones</h3>
-                    <p className="text-sm text-slate-400 max-w-xs font-medium leading-relaxed">Inicia un escaneo para ver los resultados detallados y las recomendaciones de cumplimiento.</p>
-                  </div>
-                )}
-              </motion.div>
-            )}
+) : error ? (
+            <div className="bg-white rounded-3xl border border-red-200 h-full flex flex-col items-center justify-center p-12 text-center bg-red-50/10">
+              <div className="w-20 h-20 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-500 mb-8 shadow-sm">
+                <Shield size={36} />
+              </div>
+              <h3 className="text-xl font-black text-slate-900">Error de Auditoría</h3>
+              <p className="text-sm text-red-700 max-w-xs mt-3 font-medium leading-relaxed">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="mt-10 px-8 py-3 bg-red-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
+              >
+                Regresar al Inicio
+              </button>
+            </div>
+          ) : (result && Array.isArray(result.findings) && result.findings.length > 0) ? (
+            <ResultsOverview 
+              result={result}
+              onReset={() => setResult(null)}
+              onExport={handleExport}
+              userTier={userTier}
+              isPaymentPending={isPaymentPending}
+            />
+          ) : isAuditing ? (
+            <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border border-slate-200">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+              <h3 className="text-xl font-black text-slate-900">Finalizando Peritaje...</h3>
+              <p className="text-sm text-slate-500 mt-2">Cruzando datos con normativas legales.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl h-full flex flex-col items-center justify-center p-12 text-center border-2 border-slate-100 border-dashed bg-slate-50/30">
+              <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-8">
+                <Shield size={40} />
+              </div>
+              <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest mb-2">Central de Operaciones</h3>
+              <p className="text-sm text-slate-400 max-w-xs font-medium leading-relaxed">Inicia un escaneo para ver los resultados detallados y recomendaciones.</p>
+            </div>
+          )}
 
             {activeView === 'history' && (
               <motion.div key="history-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
