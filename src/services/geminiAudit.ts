@@ -27,7 +27,7 @@ export async function runAudit(source: string | File): Promise<AuditResult> {
         title: String(f.title || "Riesgo detectado"),
         description: String(f.description || "Revisión necesaria"),
         level: String(f.level || "warning"),
-        color: String(f.color || (f.level === 'critical' ? 'red' : 'yellow')),
+        color: String(f.color || (f.level === 'critical' ? 'red' : f.level === 'warning' ? 'yellow' : 'blue')),
         lawRef: String(f.lawRef || "N/A"),
         recommendation: String(f.recommendation || "Consultar legal")
       }));
