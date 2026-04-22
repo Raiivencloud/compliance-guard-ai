@@ -1,53 +1,50 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AuditResult } from "../types";
 
-const SYSTEM_INSTRUCTION = `Actúa como 'ComplianceGuard Engine'. Analiza el texto legal y genera UNICAMENTE un objeto JSON.
-IMPORTANTE: Cada hallazgo en 'findings' DEBE incluir el campo 'color' ("red", "yellow" o "blue").`;
+const SYSTEM_INSTRUCTION = `Eres 'ComplianceGuard Engine'. Analiza el texto y devuelve SOLO un JSON con: score (1-100), summary, criticalRisks (número), advisoryWarnings (número) y findings (array). Cada finding debe tener id, category, title, description, level y color (red/yellow/blue).`;
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY || "");
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
-  // MODELOS EXACTOS DE TU CAPTURA
-  const modelsToTry = ["gemini-3-flash-preview", "gemini-3.1-pro-preview"];
-  let lastError = null;
-
+  // Solo los modelos más estables para no quemar créditos en errores 503
+  const modelsToTry = ["gemini-3.1-pro-preview", "gemini-3-flash-preview"];
+  
   for (const modelName of modelsToTry) {
     try {
       const model = genAI.getGenerativeModel({ model: modelName });
-      let textToAnalyze = typeof source === 'string' ? source : "Analizando archivo: " + source.name;
+      const textToAnalyze = typeof source === 'string' ? source : "Contenido de archivo: " + source.name;
       const prompt = `${SYSTEM_INSTRUCTION}\n\nTexto:\n${textToAnalyze}`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      const text = response.text();
-      
-      const cleanJson = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(cleanJson);
+      const text = response.text().replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(text);
 
-      const safeFindings = (parsed.findings || []).map((f: any, index: number) => ({
-        id: f.id || String(index),
-        category: f.category || "General",
-        title: f.title || "Hallazgo detectado",
-        description: f.description || "Sin descripción",
-        level: f.level || "warning",
-        color: f.color || (f.level === 'critical' ? 'red' : 'yellow'),
-        lawRef: f.lawRef || "N/A",
-        recommendation: f.recommendation || "Revisar términos"
+      // Limpiamos los hallazgos para que React y Firestore los acepten sin chistar
+      const safeFindings = (parsed.findings || []).slice(0, 5).map((f: any, i: number) => ({
+        id: String(f.id || i),
+        category: String(f.category || "General"),
+        title: String(f.title || "Riesgo detectado"),
+        description: String(f.description || "Revisión necesaria"),
+        level: String(f.level || "warning"),
+        color: String(f.color || (f.level === 'critical' ? 'red' : 'yellow')),
+        lawRef: String(f.lawRef || "N/A"),
+        recommendation: String(f.recommendation || "Consultar legal")
       }));
 
       return {
-        score: parsed.score || 0,
-        summary: parsed.summary || "Resumen no disponible.",
-        criticalRisks: parsed.criticalRisks || 0,
-        advisoryWarnings: parsed.advisoryWarnings || 0,
+        score: Number(parsed.score) || 0,
+        summary: String(parsed.summary) || "Análisis completado.",
+        criticalRisks: Number(parsed.criticalRisks) || 0,
+        advisoryWarnings: Number(parsed.advisoryWarnings) || 0,
         findings: safeFindings,
-        iaTraining: !!parsed.iaTraining,
-        jurisdiction: parsed.jurisdiction || "Global"
+        iaTraining: Boolean(parsed.iaTraining),
+        jurisdiction: String(parsed.jurisdiction || "Global")
       };
-    } catch (error) {
-      lastError = error;
+    } catch (e) {
+      console.warn("Reintentando con otro modelo...");
       continue;
     }
   }
-  throw new Error("Motores saturados. Reintentá en un minuto.");
+  throw new Error("Saturación en Google. Reintentá en un minuto.");
 }
