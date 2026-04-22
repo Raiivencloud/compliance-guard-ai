@@ -2,12 +2,17 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AuditResult } from "../types";
 
 const SYSTEM_INSTRUCTION = `Actúa como 'ComplianceGuard Engine'. Analiza el texto legal y genera UNICAMENTE un objeto JSON.
-IMPORTANTE: Cada objeto en el array 'findings' DEBE incluir obligatoriamente el campo 'color' siendo este "red", "yellow" o "blue" según la gravedad.`;
+IMPORTANTE: Cada objeto en el array 'findings' DEBE incluir el campo 'color' ("red", "yellow" o "blue").`;
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY || "");
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
-  const modelsToTry = ["gemini-3-flash-preview", "gemini-3-pro-preview"];
+  // MODELOS EXACTOS DE GOOGLE AI STUDIO (Abril 2026)
+  const modelsToTry = [
+    "gemini-3-flash-preview", 
+    "gemini-3.1-pro-preview" // El modelo de respaldo Pro actualizado
+  ];
+  
   let lastError = null;
 
   for (const modelName of modelsToTry) {
@@ -23,14 +28,14 @@ export async function runAudit(source: string | File): Promise<AuditResult> {
       const cleanJson = text.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(cleanJson);
 
-      // BLINDAJE EXTREMO: Si faltan campos o colores, los rellenamos aquí
+      // Limpieza de datos para evitar la pantalla blanca
       const safeFindings = (parsed.findings || []).map((f: any, index: number) => ({
         id: f.id || String(index),
         category: f.category || "General",
         title: f.title || "Hallazgo detectado",
         description: f.description || "Sin descripción",
         level: f.level || "warning",
-        color: f.color || (f.level === 'critical' ? 'red' : f.level === 'warning' ? 'yellow' : 'blue'),
+        color: f.color || (f.level === 'critical' ? 'red' : 'yellow'),
         lawRef: f.lawRef || "N/A",
         recommendation: f.recommendation || "Revisar términos"
       }));
@@ -46,10 +51,11 @@ export async function runAudit(source: string | File): Promise<AuditResult> {
       };
 
     } catch (error) {
-      console.warn(`Fallo en ${modelName}, intentando siguiente...`);
+      console.warn(`Fallo en ${modelName}, intentando con el respaldo...`);
       lastError = error;
       continue;
     }
   }
-  throw new Error("Servidores de Google saturados. Reintentá en un minuto.");
+  
+  throw new Error("Los servidores de Google están saturados (503). Reintentá en un minuto.");
 }
