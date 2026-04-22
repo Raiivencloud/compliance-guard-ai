@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion ... } from 'framer-motion';
 import { Download, RefreshCw, ShieldCheck, Shield } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import FindingCard from './FindingCard';
