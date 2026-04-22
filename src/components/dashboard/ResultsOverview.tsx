@@ -186,4 +186,18 @@ export default function ResultsOverview({ result, onReset, onExport, userTier, i
     />
   </div>
 ))}
+        </div>
+      </div>
+    </div>
+  );
+}function FilterBadge({ label, active }: { label: string, active?: boolean }) {
+  return (
+    <button className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+      active 
+        ? "bg-brand-500 text-white" 
+        : "bg-white/5 text-slate-500 border border-white/5 hover:border-white/10"
+    }`}>
+      {label}
+    </button>
+  );
 }
