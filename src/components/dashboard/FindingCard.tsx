@@ -1,117 +1,94 @@
 import React from 'react';
-import { AlertTriangle, ShieldCheck, AlertCircle, Shield, Lock } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { motion } from 'framer-motion';
-import type { AuditFinding, RiskLevel } from '../../types';
+import { Shield, AlertTriangle, CheckCircle, Info, Lock } from 'lucide-react';
 
 interface FindingCardProps {
-  finding: AuditFinding;
-  isBlurred: boolean;
-  userTier: 'Free' | 'Pro';
+  finding: any;
+  isBlurred?: boolean;
+  userTier?: string;
 }
 
-const levelConfig: Record<RiskLevel, { 
-  icon: React.ReactNode, 
-  color: string, 
-  bg: string, 
-  border: string, 
-  label: string 
-}> = {
+const levelConfig: any = {
   critical: {
-    icon: <AlertCircle size={20} />,
-    color: 'text-red-500',
-    bg: 'bg-red-50/50',
-    border: 'border-red-100',
-    label: 'Critical Risk'
+    icon: Shield,
+    color: 'red',
+    bg: 'bg-red-500/10',
+    border: 'border-red-500/20',
+    text: 'text-red-400',
+    label: 'Crítico'
   },
   warning: {
-    icon: <AlertTriangle size={20} />,
-    color: 'text-amber-500',
-    bg: 'bg-amber-50/50',
-    border: 'border-amber-100',
-    label: 'Warning'
+    icon: AlertTriangle,
+    color: 'amber',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/20',
+    text: 'text-amber-400',
+    label: 'Advertencia'
   },
   safe: {
-    icon: <ShieldCheck size={20} />,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50/50',
-    border: 'border-emerald-100',
-    label: 'Secure'
+    icon: CheckCircle,
+    color: 'emerald',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/20',
+    text: 'text-emerald-400',
+    label: 'Seguro'
   }
 };
 
 export default function FindingCard({ finding, isBlurred, userTier }: FindingCardProps) {
-  const config = levelConfig[finding.level];
+  // BLINDAJE TOTAL: Si finding no existe o el level es raro, usamos 'warning' por defecto
+  const safeLevel = (finding?.level && levelConfig[finding.level]) ? finding.level : 'warning';
+  const config = levelConfig[safeLevel];
+
+  if (!finding) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn(
-        "p-6 rounded-2xl border transition-all flex gap-6 group bg-white border-slate-200 hover:shadow-lg hover:border-slate-300 shadow-sm relative overflow-hidden",
-        isBlurred && userTier === 'Free' && "select-none"
-      )}
-    >
-      {isBlurred && userTier === 'Free' && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/20 backdrop-blur-[6px]">
-          <div className="bg-slate-900 text-white p-4 rounded-2xl flex items-center gap-3 shadow-2xl animate-in fade-in zoom-in duration-300">
-            <Lock size={18} className="text-blue-400" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Upgrade to Unlock Findings</span>
-          </div>
+    <div className={`relative p-5 rounded-2xl border transition-all duration-300 ${config.bg} ${config.border} ${isBlurred ? 'blur-md select-none' : ''}`}>
+      <div className="flex items-start gap-4">
+        <div className={`p-2.5 rounded-xl bg-black/40 ${config.text}`}>
+          <config.icon className="w-5 h-5" />
         </div>
-      )}
-
-      <div className={cn(
-        "mt-1 shrink-0 p-3 rounded-xl bg-slate-50 transition-all", 
-        config.color,
-        isBlurred && userTier === 'Free' && "blur-[2px]"
-      )}>
-        {config.icon}
-      </div>
-      
-      <div className={cn("flex-1", isBlurred && userTier === 'Free' && "blur-[5px]")}>
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex flex-col gap-1">
-            <h4 className="text-sm font-black text-slate-900 tracking-tight">{finding.title}</h4>
-            <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded border border-blue-100 self-start">
-              {finding.lawRef}
-            </span>
-          </div>
-          <span className={cn(
-            "text-[9px] font-black uppercase px-2 py-1 rounded-md tracking-widest",
-            finding.level === 'critical' ? "bg-red-50 text-red-600 border border-red-100" : finding.level === 'warning' ? "bg-amber-50 text-amber-600 border border-amber-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
-          )}>
-            {config.label}
-          </span>
-        </div>
-        <p className="text-xs text-slate-600 leading-relaxed font-medium">
-          {finding.description}
-        </p>
         
-        <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col gap-3 relative">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Shield size={12} className="text-blue-600" />
-            Remediation Protocol
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/40 ${config.text}`}>
+              {config.label}
+            </span>
+            <span className="text-slate-500 text-xs">{finding.category || 'General'}</span>
+          </div>
+          
+          <h4 className="text-slate-200 font-semibold mb-2 leading-tight">
+            {finding.title || 'Hallazgo detectado'}
+          </h4>
+          
+          <p className="text-slate-400 text-sm leading-relaxed mb-4">
+            {finding.description || 'No hay descripción disponible para este punto.'}
           </p>
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 relative group/rem">
-            <p className={cn(
-              "text-xs font-bold text-slate-600 italic leading-relaxed transition-all",
-              userTier === 'Free' ? "blur-[3px] select-none" : "blur-0 select-auto"
-            )}>
-              {finding.recommendation}
-            </p>
-            {userTier === 'Free' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-50/40 rounded-xl">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm">
-                  <Lock size={10} className="text-slate-400" />
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Locked for Free Tier</span>
-                </div>
-              </div>
-            )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+              <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Impacto</span>
+              <span className="text-sm text-slate-300 font-medium">{finding.impact || 'Medio'}</span>
+            </div>
+            <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+              <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Esfuerzo</span>
+              <span className="text-sm text-slate-300 font-medium">{finding.effort || 'Bajo'}</span>
+            </div>
           </div>
         </div>
       </div>
-    </motion.div>
+
+      {isBlurred && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black/20 backdrop-blur-sm rounded-2xl">
+          <Lock className="w-8 h-8 text-brand-400 mb-3" />
+          <h5 className="text-white font-bold mb-1 text-sm">Contenido Premium</h5>
+          <p className="text-slate-400 text-[11px] mb-4 max-w-[180px]">
+            Mejorá tu plan para ver el análisis detallado de este hallazgo.
+          </p>
+          <button className="px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-lg hover:bg-brand-600 transition-colors">
+            Actualizar Plan
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
-
