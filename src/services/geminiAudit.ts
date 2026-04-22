@@ -1,59 +1,46 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AuditResult } from "../types";
 
-const SYSTEM_INSTRUCTION = `Eres 'ComplianceGuard Engine', experto en leyes de privacidad y seguridad de datos. 
-Analiza el texto y devuelve SIEMPRE un JSON con esta estructura:
-{
-  "score": (número del 1 al 100),
-  "summary": "resumen breve",
-  "criticalRisks": (cantidad),
-  "advisoryWarnings": (cantidad),
-  "findings": [
-    {
-      "id": "1",
-      "category": "Privacy",
-      "title": "...",
-      "description": "...",
-      "level": "critical",
-      "color": "red",
-      "lawRef": "GDPR / Ley 25.326",
-      "recommendation": "..."
-    }
-  ],
-  "iaTraining": true/false,
-  "jurisdiction": "Global/Argentina"
-}`;
+const SYSTEM_INSTRUCTION = `Actúa como 'ComplianceGuard Engine'. 
+Analiza el texto legal y genera UNICAMENTE un objeto JSON con:
+score (1-100), summary (string), criticalRisks (number), advisoryWarnings (number), 
+findings (array de objetos con id, category, title, description, level, color, lawRef, recommendation),
+iaTraining (boolean) y jurisdiction (string).`;
 
-// Usamos la variable de entorno que ya configuraste bien en Netlify
+// Usamos la API KEY de Google AI Studio (la que empieza con AIza...)
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY || "");
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
   try {
-    // CAMBIO CLAVE: Usamos gemini-3-flash que es el modelo de 2026
+    // MODELO ESPECIFICO: gemini-3-flash-preview
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3-flash",
-      systemInstruction: SYSTEM_INSTRUCTION 
+      model: "gemini-3-flash-preview" 
     });
 
     let textToAnalyze = "";
     if (typeof source === 'string') {
       textToAnalyze = source;
     } else {
-      textToAnalyze = "Analizando archivo: " + source.name;
-      // Para pruebas, si es archivo, le mandamos un placeholder 
-      // (luego podés agregar un extractor de PDF)
+      // Nota: Si mandas archivos, asegúrate de extraer el texto antes 
+      // o usar la capacidad multimodal del modelo.
+      textToAnalyze = "Analizando contenido de: " + source.name;
     }
 
-    const result = await model.generateContent(textToAnalyze);
+    const prompt = `${SYSTEM_INSTRUCTION}\n\nTexto a procesar:\n${textToAnalyze}`;
+
+    const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
     
-    // Limpieza de posibles bloques markdown que devuelva la IA
+    // Limpieza de bloques de código markdown
     const cleanJson = text.replace(/```json|```/g, "").trim();
     return JSON.parse(cleanJson);
 
-  } catch (error) {
-    console.error("Error en la conexión con Gemini 3:", error);
-    throw new Error("El motor de IA no respondió. Verificá la cuota de tu API Key.");
+  } catch (error: any) {
+    console.error("Error en Gemini 3 Preview:", error);
+    
+    // Si el modelo preview falla o no está disponible, el sistema 
+    // debería intentar con el modelo pro si así lo configuraste.
+    throw new Error("El motor de IA (Gemini 3 Flash Preview) no respondió. Revisa tu cuota en AI Studio.");
   }
 }
