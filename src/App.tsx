@@ -116,29 +116,35 @@ function MainApp() {
     setResult(null);
     setError(null);
     setActiveView('audit');
-    
+
     try {
       const auditResult = await runAudit(source);
-      setResult(auditResult);
       
-      // Persist to Firestore - Filter undefined values
-      const auditData = {
-        ...auditResult,
-        userId: user.uid,
-        timestamp: new Date().toISOString()
-      };
+      // Validamos que el resultado tenga findings antes de mostrarlo
+      if (auditResult && Array.isArray(auditResult.findings)) {
+        setResult(auditResult);
 
-      // Firestore doesn't like 'undefined' values
-      const cleanAuditData = Object.fromEntries(
-        Object.entries(auditData).filter(([_, v]) => v !== undefined)
-      );
-      
-      await addDoc(collection(db, 'audits'), cleanAuditData);
-      setHistory(prev => [auditData, ...prev]);
+        // Persistimos en Firestore (solo si la IA devolvió datos válidos)
+        const auditData = {
+          ...auditResult,
+          userId: user.uid,
+          timestamp: new Date().toISOString()
+        };
 
+        const cleanAuditData = Object.fromEntries(
+          Object.entries(auditData).filter(([_, v]) => v !== undefined)
+        );
+
+        await addDoc(collection(db, 'audits'), cleanAuditData);
+        setHistory(prev => [auditData as AuditResult, ...prev]);
+      } else {
+        throw new Error("El motor de IA devolvió un formato incompleto. Reintentá.");
+      }
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Audit Protocol Error.');
+      console.error("Error en el protocolo de auditoría:", err);
+      // Mostramos el error en el UI en lugar de dejar la pantalla blanca
+      setError(err.message || 'Error en el protocolo de auditoría. Reintentá.');
+      setResult(null); 
     } finally {
       setIsAuditing(false);
     }
