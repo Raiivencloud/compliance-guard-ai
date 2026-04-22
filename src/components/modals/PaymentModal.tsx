@@ -1,4 +1,4 @@
-import { motion ... } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, Globe, ShieldCheck, Lock, ExternalLink, Zap, CheckCircle2, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
