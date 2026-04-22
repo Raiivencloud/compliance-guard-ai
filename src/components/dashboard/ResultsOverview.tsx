@@ -174,23 +174,26 @@ export default function ResultsOverview({ result, onReset, onExport, userTier, i
             <span className="text-[10px] font-black uppercase text-slate-500 bg-slate-100 px-2 py-1 rounded-md">{result.findings.length} Hallazgos</span>
           </div>
           <div className="space-y-4">
-    {result.findings?.map((finding, index) => (
-  <div key={finding.id || `f-${index}`} className="animate-in slide-in-from-bottom-2 duration-300 fill-mode-both">
-    <FindingCard 
-      finding={{
-        ...finding,
-        color: finding.color || 'blue'
-      }}
-      isBlurred={userTier === 'Free' ? index > 0 : false}
-      userTier={userTier}
-    />
-  </div>
-))}
+   {result.findings?.map((finding, index) => (
+              <div key={finding.id || `f-${index}`} className="animate-in slide-in-from-bottom-2 duration-300 fill-mode-both">
+                <FindingCard 
+                  finding={{
+                    ...finding,
+                    color: finding.color || 'blue'
+                  }}
+                  isBlurred={userTier === 'Free' ? index > 0 : false}
+                  userTier={userTier}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
-}function FilterBadge({ label, active }: { label: string, active?: boolean }) {
+}
+
+function FilterBadge({ label, active }: { label: string, active?: boolean }) {
   return (
     <button className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
       active 
