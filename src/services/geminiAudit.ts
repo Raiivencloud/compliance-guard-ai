@@ -7,7 +7,6 @@ IMPORTANTE: Cada objeto en el array 'findings' DEBE incluir obligatoriamente el 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY || "");
 
 export async function runAudit(source: string | File): Promise<AuditResult> {
-  // Lista de modelos para probar en orden de prioridad
   const modelsToTry = ["gemini-3-flash-preview", "gemini-3-pro-preview"];
   let lastError = null;
 
@@ -22,23 +21,35 @@ export async function runAudit(source: string | File): Promise<AuditResult> {
       const text = response.text();
       
       const cleanJson = text.replace(/```json|```/g, "").trim();
-      const parsed: AuditResult = JSON.parse(cleanJson);
+      const parsed = JSON.parse(cleanJson);
 
-      // BLINDAJE: Aseguramos colores para que no explote la web
-      if (parsed.findings) {
-        parsed.findings = parsed.findings.map(f => ({
-          ...f,
-          color: f.color || (f.level === 'critical' ? 'red' : f.level === 'warning' ? 'yellow' : 'blue')
-        }));
-      }
-      return parsed;
+      // BLINDAJE EXTREMO: Si faltan campos o colores, los rellenamos aquí
+      const safeFindings = (parsed.findings || []).map((f: any, index: number) => ({
+        id: f.id || String(index),
+        category: f.category || "General",
+        title: f.title || "Hallazgo detectado",
+        description: f.description || "Sin descripción",
+        level: f.level || "warning",
+        color: f.color || (f.level === 'critical' ? 'red' : f.level === 'warning' ? 'yellow' : 'blue'),
+        lawRef: f.lawRef || "N/A",
+        recommendation: f.recommendation || "Revisar términos"
+      }));
+
+      return {
+        score: parsed.score || 0,
+        summary: parsed.summary || "Resumen no disponible.",
+        criticalRisks: parsed.criticalRisks || 0,
+        advisoryWarnings: parsed.advisoryWarnings || 0,
+        findings: safeFindings,
+        iaTraining: !!parsed.iaTraining,
+        jurisdiction: parsed.jurisdiction || "Global"
+      };
 
     } catch (error) {
-      console.warn(`Modelo ${modelName} falló o saturado. Probando siguiente...`);
+      console.warn(`Fallo en ${modelName}, intentando siguiente...`);
       lastError = error;
-      continue; // Salta al siguiente modelo
+      continue;
     }
   }
-
-  throw new Error("Todos los motores de IA están bajo alta demanda. Reintentá en un minuto.");
+  throw new Error("Servidores de Google saturados. Reintentá en un minuto.");
 }
