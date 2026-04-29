@@ -1,20 +1,41 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ComplianceGuard AI 🛡️
 
-# Run and deploy your AI Studio app
+**ComplianceGuard** is a professional AI-powered legal and privacy auditing platform. It automates the complex process of GDPR compliance checks and security audits using Large Language Models (LLMs) and advanced Retrieval-Augmented Generation (RAG).
 
-This contains everything you need to run your app locally.
+## 🚀 Key Features
 
-View your app in AI Studio: https://ai.studio/apps/70772350-814d-4a8f-9be0-0059587d7d56
+* **Automated GDPR Auditing:** Deep-scan legal documents to identify compliance gaps with European regulations automatically.
+* **Privacy Policy Intelligence:** High-precision extraction of data handling practices and risk identification.
+* **Advanced RAG Pipeline:** Context-aware document analysis leveraging vector embeddings for accurate information retrieval.
+* **Risk Mitigation Reports:** Generates structured, actionable insights to help organizations achieve compliance faster.
 
-## Run Locally
+## 🛠️ Tech Stack
 
-**Prerequisites:**  Node.js
+* **Frontend:** Next.js, TypeScript, Tailwind CSS.
+* **Backend:** Node.js, Express.
+* **AI & Orchestration:** LangChain, OpenAI API, Vector Database.
+* **Cloud & Deployment:** Vercel (Frontend), Google Cloud Platform (Backend).
 
+## 📦 Getting Started
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/tu-usuario/compliance-guard-ai.git](https://github.com/tu-usuario/compliance-guard-ai.git)
+    ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Configure Environment Variables:**
+    Create a `.env` file in the root directory (never commit this file to GitHub):
+    ```env
+    OPENAI_API_KEY=your_api_key
+    DATABASE_URL=your_database_url
+    ```
+4.  **Run in Development Mode:**
+    ```bash
+    npm run dev
+    ```
+
+---
+*Developed by Maximiliano Agustin Gestro — Software Engineer & Founder.*
