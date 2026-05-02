@@ -26,3 +26,4 @@ src/
 ├── hooks/          # Custom Logic (Translations & UI Helpers)
 ├── lib/            # Firebase & Utility Configurations
 └── services/       # AI Logic (Gemini Audit Integration)
+Nota técnica: "Este proyecto fue una prueba de concepto/MVP funcional. Actualmente, el despliegue en vivo está pausado para optimizar costos de API, pero el código refleja la arquitectura completa de [complianceguard]."
